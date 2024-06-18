@@ -1,0 +1,19 @@
+[project]
+name = "contributor"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "sudoskys", email = "coldlando@hotmail.com"},
+]
+dependencies = [
+    "github-bot-api>=0.6.0",
+    "python-dotenv>=1.0.1",
+    "pydantic-settings>=2.3.3",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
