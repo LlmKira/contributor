@@ -91,6 +91,9 @@ class GithubWebhookHandler:
 
         def decorator(func: Callable):
             """Register a handler for a specific GitHub event type and action."""
+            # 如果已经存在，则警告
+            if self.handlers.get(event_type, {}).get(action):
+                logger.warning(f"Event[{event_type}]({action}) already has a handler, overwriting")
             self.handlers.setdefault(event_type, {})[action] = func
             if filter_func:
                 self.filters.setdefault(event_type, {})[action] = filter_func

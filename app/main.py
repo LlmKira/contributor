@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : sudoskys
-
 from github import Github, GithubIntegration
+from loguru import logger
 
 from settings.server import ServerSetting
 from webhook.event.issue_comment import CreateIssueCommentEvent
@@ -21,13 +21,13 @@ webhook_handler.debug = True
 
 @webhook_handler.listen(Issue, action=Issue.OPEN)
 async def handle_issue_open(event: OpenIssueOpenEvent):
-    print("Handling issue open event")
+    logger.info("Received Issue.OPEN event")
     print(f"Issue: {event.issue.title}")
 
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED)
 async def handle_issue_comment(event: CreateIssueCommentEvent):
-    print("Handling issue comment event")
+    logger.info("Received IssueComment.CREATED event")
     # Add your logic here
     owner = event.repository.owner.login
     repo_name = event.repository.name
