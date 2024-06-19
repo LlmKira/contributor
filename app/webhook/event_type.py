@@ -7,7 +7,7 @@ class BaseEventType(object):
 
 
 class _Issue(BaseEventType):
-    OPENED = "opened"
+    OPEN = "opened"
 
     def __str__(self):
         return "issue"
@@ -24,6 +24,6 @@ Issue = _Issue()
 IssueComment = _IssueComment()
 
 EVENT_MODEL = {
-    (Issue.__str__(), Issue.OPENED): OpenIssueOpenEvent,
+    (Issue.__str__(), Issue.OPEN): OpenIssueOpenEvent,
     (IssueComment.__str__(), IssueComment.CREATED): CreateIssueCommentEvent,
 }
