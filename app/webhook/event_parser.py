@@ -2,10 +2,21 @@
 
 import hmac
 import json
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Dict, Any
+
+from pydantic.dataclasses import dataclass
 
 from .exception import InvalidRequestError
-from .handler import GitHubEvent
+
+
+@dataclass
+class GitHubEvent:
+    """Represents a GitHub webhook event."""
+    name: str
+    delivery_id: str
+    signature: Optional[str]
+    user_agent: str
+    payload: Dict[str, Any]
 
 
 def parse_event(headers: Mapping[str, str], raw_body: bytes,

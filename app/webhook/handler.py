@@ -1,27 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
 from functools import wraps
-from typing import Callable, Dict, Optional, Union, Any
+from typing import Callable, Dict, Optional, Union
 
 import uvicorn
 from fastapi import FastAPI, Request
 from loguru import logger
 from pydantic import BaseModel
-from pydantic.dataclasses import dataclass
 
 from .event_parser import parse_event
 from .event_type import EVENT_MODEL, BaseEventType
 from .exception import InvalidRequestError
-
-
-@dataclass
-class GitHubEvent:
-    """Represents a GitHub webhook event."""
-    name: str
-    delivery_id: str
-    signature: Optional[str]
-    user_agent: str
-    payload: Dict[str, Any]
 
 
 class HandlerConfig:
