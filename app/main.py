@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : sudoskys
+import os
+
 from github import Github, GithubIntegration
 from loguru import logger
 
@@ -15,9 +17,10 @@ git_integration = GithubIntegration(
     user_agent="pygithub/Python",
 )
 
-# Example usage
 webhook_handler = GithubWebhookHandler()
-webhook_handler.debug = True
+webhook_handler.debug = True if os.getenv("DEBUG") else False
+if webhook_handler.debug:
+    print("Debug mode enabled")
 
 
 @webhook_handler.listen(Issue, action=Issue.OPEN)
