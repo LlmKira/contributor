@@ -1,9 +1,8 @@
 import hmac
 import json
 import logging
-import typing
 from functools import wraps
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, Optional, Union, Any, Mapping
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -12,9 +11,10 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from .event_type import EVENT_MODEL, BaseEventType
+from .exception import InvalidRequestError
 
 
-def extract_mime_components(mime: str) -> typing.Tuple[str, typing.List[typing.Tuple[str, str]]]:
+def extract_mime_components(mime: str) -> tuple[str, list[tuple]]:
     """
     Extracts and returns the main type and parameters from a MIME type string.
     """
@@ -54,22 +54,18 @@ def verify_signature(sig: str, payload: bytes, secret: bytes, algo: str = "sha25
         raise SignatureMismatchError(sig, computed_sig)
 
 
-class InvalidRequestError(Exception):
-    """Raised when an invalid request is processed."""
-
-
 @dataclass
 class GitHubEvent:
     """Represents a GitHub webhook event."""
     name: str
     delivery_id: str
-    signature: typing.Optional[str]
+    signature: Optional[str]
     user_agent: str
-    payload: typing.Dict[str, typing.Any]
+    payload: Dict[str, Any]
 
 
-def parse_event(headers: typing.Mapping[str, str], raw_body: bytes,
-                webhook_secret: typing.Optional[str] = None) -> GitHubEvent:
+def parse_event(headers: Mapping[str, str], raw_body: bytes,
+                webhook_secret: Optional[str] = None) -> GitHubEvent:
     """
     Parses the headers and raw body of a webhook request into a `GitHubEvent` object.
     """
@@ -88,7 +84,8 @@ def parse_event(headers: typing.Mapping[str, str], raw_body: bytes,
     mime_type, parameters = extract_mime_components(content_type)
     if mime_type != "application/json":
         raise InvalidRequestError(f"Expected Content-Type: application/json, got {content_type}")
-    encoding = dict(parameters).get("encoding", "UTF-8")
+    # encoding = dict(parameters).get("encoding", "UTF-8")
+    encoding = next((value for name, value in parameters if name == "encoding"), "UTF-8")
 
     if webhook_secret:
         signature = signature_256 or signature_1
