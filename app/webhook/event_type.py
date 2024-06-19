@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .event.issue_comment import CreateIssueCommentEvent
 from .event.issues import OpenIssueOpenEvent
 

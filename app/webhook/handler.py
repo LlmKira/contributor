@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 from functools import wraps
 from typing import Callable, Dict, Optional, Union, Any

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from typing import Optional, Literal, Union
 
 from pydantic import BaseModel, ConfigDict

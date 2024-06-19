@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import hmac
 import json
 from typing import Mapping, Optional

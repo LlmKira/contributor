@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2023/11/15 下午10:19
 # @Author  : sudoskys
-# @File    : note_github_bot_test.py
-# @Software: PyCharm
 
 from github import Github, GithubIntegration
 
