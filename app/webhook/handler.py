@@ -76,7 +76,7 @@ class GithubWebhookHandler:
                 return {"status": "ok"}
             except Exception as e:
                 logger.error(f"Webhook listener encountered an error: {e}")
-                return {"status": "error", "details": str(e)}
+                return {"status": "error", "details": "Server encountered an error, check logs for details"}
 
     def listen(
             self,
