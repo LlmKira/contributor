@@ -65,10 +65,11 @@ class GithubWebhookHandler:
                 try:
                     event = parse_event(headers, raw_body, self.webhook_secret)
                 except InvalidRequestError as e:
+                    # docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
                     logger.error(f"Invalid webhook request: {e}")
                     return {
                         "status": "error",
-                        "details": "docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries"
+                        "details": "Invalid webhook request",
                     }
                 if event.name and event.payload.get("action"):
                     await self.handle_event(event.name, event.payload["action"], event.payload)
