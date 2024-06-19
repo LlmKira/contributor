@@ -4,8 +4,8 @@ import hmac
 import json
 from typing import Mapping, Optional
 
-from app.webhook.exception import InvalidRequestError
-from app.webhook.handler import GitHubEvent
+from .exception import InvalidRequestError
+from .handler import GitHubEvent
 
 
 def parse_event(headers: Mapping[str, str], raw_body: bytes,
