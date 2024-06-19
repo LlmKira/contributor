@@ -10,7 +10,6 @@ from webhook.event_type import Issue, IssueComment
 from webhook.handler import GithubWebhookHandler
 
 git_integration = GithubIntegration(
-
     integration_id=ServerSetting.github_app_id,
     private_key=ServerSetting.github_private_key.get_secret_value(),
     user_agent="pygithub/Python",
