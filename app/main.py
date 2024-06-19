@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Author  : sudoskys
+import asyncio
 import os
 
-from github import Github, GithubIntegration
+from github import GithubIntegration
 from loguru import logger
 
 from settings.server import ServerSetting
@@ -32,17 +33,11 @@ async def handle_issue_open(event: OpenIssueOpenEvent):
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED)
 async def handle_issue_comment(event: CreateIssueCommentEvent):
     logger.info("Received IssueComment.CREATED event")
-    # Add your logic here
-    owner = event.repository.owner.login
-    repo_name = event.repository.name
-    git_connection = Github(
-        login_or_token=git_integration.get_access_token(
-            git_integration.get_repo_installation(owner, repo_name).id
-        ).token
-    )
-    repo = git_connection.get_repo(f"{owner}/{repo_name}")
-    issue = repo.get_issue(number=event.issue.number)
-    issue.create_comment(f"Hello World!")
+    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+    comment = issue.create_comment(f"Hello World!")
+    await asyncio.sleep(5)
+    issue.get_comment(comment.id).edit("Hello World! Edited")  # 编辑一个评论需要 comment id 和 issue number，还有
+    print(f"Issue: {event.issue.title}")
 
 
 if __name__ == "__main__":

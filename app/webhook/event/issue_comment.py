@@ -2,9 +2,10 @@
 
 from typing import Optional, Literal, Union
 
+from github import GithubIntegration
 from pydantic import BaseModel, ConfigDict
 
-from ._base import Repository, Sender, Installation, BaseUser, BaseIssue, Organization
+from ._base import Repository, Sender, Installation, BaseUser, BaseIssue, Organization, BaseEvent
 
 
 class _CommentUser(BaseUser):
@@ -112,7 +113,7 @@ class Issue(BaseIssue):
     performed_via_github_app: Optional[dict] = None
 
 
-class CreateIssueCommentEvent(BaseModel):
+class CreateIssueCommentEvent(BaseEvent):
     action: Literal["created"]
     issue: Issue
     comment: Comment
@@ -121,3 +122,27 @@ class CreateIssueCommentEvent(BaseModel):
     organization: Optional[Organization] = None
     installation: Optional[Installation] = None
     model_config = ConfigDict(extra="allow")
+
+    def get_issue(self, integration: GithubIntegration):
+        """
+        Get the issue object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_issue(integration=integration, issue_number=self.issue.number)
+
+    def get_comment(self, integration: GithubIntegration):
+        """
+        Get the comment object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_comment(integration=integration, comment_id=self.comment.id)
+
+    def get_repo(self, integration: GithubIntegration):
+        """
+        Get the repository object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_repo(integration=integration)

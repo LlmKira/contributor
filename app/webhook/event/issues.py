@@ -2,9 +2,10 @@
 
 from typing import Optional, Literal, Union
 
-from pydantic import BaseModel, ConfigDict
+from github import GithubIntegration
+from pydantic import ConfigDict
 
-from ._base import BaseIssue, Repository, Sender, Installation, BaseUser, Organization
+from ._base import BaseIssue, Repository, Sender, Installation, BaseUser, Organization, BaseEvent
 
 
 class IssueUser(BaseUser):
@@ -56,7 +57,7 @@ class Issue(BaseIssue):
     timeline_url: Optional[str] = None
 
 
-class OpenIssueOpenEvent(BaseModel):
+class OpenIssueOpenEvent(BaseEvent):
     action: Literal["open"]
     issue: Issue
     repository: Repository
@@ -65,3 +66,20 @@ class OpenIssueOpenEvent(BaseModel):
     installation: Optional[Installation] = None
 
     model_config = ConfigDict(extra="allow")
+
+    def get_issue(self, integration: GithubIntegration):
+        """
+        Get the issue object.
+        :param integration: GithubIntegration
+        :param number: int
+        :return: Issue
+        """
+        return self.repository.get_issue(integration, issue_number=self.issue.number)
+
+    def get_repo(self, integration: GithubIntegration):
+        """
+        Get the repository object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_repo(integration=integration)

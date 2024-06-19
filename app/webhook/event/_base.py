@@ -3,6 +3,10 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Union, Literal
 
+from github import GithubIntegration, Github
+from github.CommitComment import CommitComment as GithubCommitComment
+from github.Issue import Issue as GithubIssue
+from github.Repository import Repository as GithubRepository
 from pydantic import BaseModel
 
 
@@ -11,6 +15,11 @@ class Organization(BaseModel):
     id: int
     node_id: str
     url: str
+
+
+class Installation(BaseModel):
+    id: int
+    node_id: str
 
 
 class BaseUser(BaseModel, ABC):
@@ -109,7 +118,86 @@ class Repository(BaseModel):
     allow_forking: bool
     is_template: bool
 
+    def _get_repo_access_token(self, integration: GithubIntegration):
+        """
+        Get the access token for the repository.
+        :param integration: GithubIntegration
+        :return: str
+        """
+        return integration.get_access_token(integration.get_repo_installation(self.owner.login, self.name).id).token
 
-class Installation(BaseModel):
-    id: int
-    node_id: str
+    def get_context(self, integration: GithubIntegration) -> Github:
+        """
+        Get the context for the repository.
+        :param integration: GithubIntegration
+        :return: GitHub
+        """
+        return Github(login_or_token=self._get_repo_access_token(integration))
+
+    def get_repo(self, integration: GithubIntegration) -> GithubRepository:
+        """
+        Get the repository object.
+        :param integration: GithubIntegration
+        :return: Repository
+        """
+        return self.get_context(integration).get_repo(f"{self.owner.login}/{self.name}")
+
+    def get_issue(self, integration: GithubIntegration, issue_number: int) -> GithubIssue:
+        """
+        Get the issue object.
+        :param integration: GithubIntegration
+        :param issue_number: int
+        :return: Issue
+        """
+        return self.get_repo(integration).get_issue(number=issue_number)
+
+    def get_comment(self, integration: GithubIntegration, comment_id: int) -> GithubCommitComment:
+        """
+        Get the comment object.
+        :param integration: GithubIntegration
+        :param comment_id: int
+        :return: Comment
+        """
+        return self.get_repo(integration).get_comment(comment_id)
+
+    @property
+    def is_fork(self):
+        return self.fork
+
+    @property
+    def is_archived(self):
+        return self.archived
+
+    @property
+    def is_disabled(self):
+        return self.disabled
+
+    @property
+    def is_template(self):
+        return self.is_template
+
+    @property
+    def is_private(self):
+        return self.private
+
+    @property
+    def is_public(self):
+        return not self.private
+
+
+class BaseEvent(BaseModel, ABC):
+    action: str
+    sender: Sender
+    repository: Repository
+    organization: Optional[Organization] = None
+    installation: Optional[Installation] = None
+
+    def get_context(self, integration: GithubIntegration) -> Github:
+        """
+        Get the context for the event.
+        :param integration: GithubIntegration
+        :return: GitHub
+        """
+        if self.installation:
+            return Github(login_or_token=integration.get_access_token(self.installation.id).token)
+        return self.repository.get_context(integration)
