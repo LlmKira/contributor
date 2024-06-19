@@ -9,6 +9,7 @@ from github import Github, GithubIntegration
 from settings.server import ServerSetting
 from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event.issues import OpenIssueOpenEvent
+from webhook.event_type import Issue, IssueComment
 from webhook.handler import GithubWebhookHandler
 
 git_integration = GithubIntegration(
@@ -21,13 +22,13 @@ webhook_handler = GithubWebhookHandler()
 webhook_handler.debug = True
 
 
-@webhook_handler.listen("issue", action="open")
+@webhook_handler.listen(Issue, action=Issue.OPEN)
 async def handle_issue_open(event: OpenIssueOpenEvent):
     print("Handling issue open event")
     print(f"Issue: {event.issue.title}")
 
 
-@webhook_handler.listen("issue_comment", action="created")
+@webhook_handler.listen(IssueComment, action=IssueComment.CREATED)
 async def handle_issue_comment(event: CreateIssueCommentEvent):
     print("Handling issue comment event")
     # Add your logic here
