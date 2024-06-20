@@ -38,7 +38,6 @@ class Issue(BaseIssue):
     html_url: str
     id: int
     labels_url: str
-    milestone: dict
     node_id: str
     number: int
     reactions: dict
@@ -47,6 +46,7 @@ class Issue(BaseIssue):
     updated_at: str
     url: str
     user: dict
+    milestone: Optional[dict] = None
     locked: Optional[bool] = None
     assignee: Optional[dict] = None
     labels: Optional[list] = None
@@ -57,8 +57,8 @@ class Issue(BaseIssue):
     timeline_url: Optional[str] = None
 
 
-class OpenIssueOpenEvent(BaseEvent):
-    action: Literal["open"]
+class OpenedIssueOpenEvent(BaseEvent):
+    action: Literal["opened"]
     issue: Issue
     repository: Repository
     sender: Sender

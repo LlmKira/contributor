@@ -1,0 +1,8 @@
+language = "Chinese"
+issue_auto_label = true
+issue_auto_tidy = true
+issue_close_with_report = true
+
+# pr_auto_label = true
+# pr_auto_review = true
+# pr_auto_merge = true

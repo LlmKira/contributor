@@ -1,6 +1,6 @@
 # contributor
 
-This is a collaborative tool
+## 开发环境设置
 
 ````shell
 bun install -g smee-client
@@ -14,7 +14,6 @@ https://github.com/chmouel/gosmee
 https://github.com/octokit/webhooks/blob/main/payload-examples/api.github.com/issues/assigned.payload.json
 
 https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
-
 
 https://docs.github.com/zh/webhooks/using-webhooks/validating-webhook-deliveries
 

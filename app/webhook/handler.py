@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 from functools import wraps
 from typing import Callable, Dict, Optional, Union
@@ -38,9 +39,8 @@ class GithubWebhookHandler:
         :param webhook_secret: Secret key for validating incoming webhooks.
         """
         self.app = FastAPI()
-        self.handlers: Dict[str, Dict[str, Callable]] = {}
-        self.filters: Dict[str, Dict[str, Callable]] = {}
-        self.configs: Dict[str, Dict[str, HandlerConfig]] = {}
+        self.handlers: Dict[
+            str, Dict[str, Dict[str, Dict[str, Union[str, Callable, HandlerConfig, Optional[Callable]]]]]] = {}
         self.debug: bool = False
         self.log_server = log_server
         self.webhook_secret = webhook_secret
@@ -72,6 +72,8 @@ class GithubWebhookHandler:
             self,
             event_type: Union[BaseEventType, str],
             action: str,
+            unique_id: str,
+            desc: str = "listener",
             filter_func: Optional[Callable[[dict], bool]] = None,
             config: HandlerConfig = HandlerConfig(),
     ):
@@ -80,15 +82,20 @@ class GithubWebhookHandler:
 
         def decorator(func: Callable):
             """Register a handler for a specific GitHub event type and action."""
-            # 如果已经存在，则警告
-            if self.handlers.get(event_type, {}).get(action):
-                logger.warning(f"Event[{event_type}]({action}) already has a handler, overwriting")
-            self.handlers.setdefault(event_type, {})[action] = func
-            if filter_func:
-                self.filters.setdefault(event_type, {})[action] = filter_func
-            self.configs.setdefault(event_type, {})[action] = config
+            event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {})
 
-            logger.info(f"Registered listener for Event[{event_type}]({action}) --filter {filter_func is not None}")
+            if unique_id in event_handlers:
+                logger.warning(
+                    f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), old handler will be replaced.")
+            event_handlers[unique_id] = {
+                "desc": desc,
+                "handler": func,
+                "filter_func": filter_func,
+                "config": config
+            }
+
+            logger.info(
+                f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}")
 
             @wraps(func)
             async def wrapped_function(*args, **kwargs):
@@ -104,44 +111,53 @@ class GithubWebhookHandler:
 
     async def handle_event(self, event_type: str, action: str, payload: dict):
         """Handle incoming GitHub webhook events."""
-        handler = self.handlers.get(event_type, {}).get(action)
-        if not handler:
-            logger.warning(f"Event[{event_type}]({action}) not handled")
+        handlers = self.handlers.get(event_type, {}).get(action, {}).values()
+        if not handlers:
+            logger.debug(f"Event[{event_type}]({action}) received")
             return
+        tasks = []
+        for handler_dict in handlers:
+            handler = handler_dict["handler"]
+            config = handler_dict["config"]
+            filter_func = handler_dict["filter_func"]
 
-        if self.is_filtered(event_type, action, payload):
-            logger.info(f"Event[{event_type}]({action}) filtered")
-            return
+            if filter_func and not self.apply_filter(filter_func, payload):
+                logger.info(f"Event[{event_type}]({action}) filtered for handler with desc: {handler_dict['desc']}")
+                continue
 
-        config = self.configs[event_type].get(action, HandlerConfig())
-        model = self.get_event_model(event_type, action, payload)
-        if not model:
-            logger.warning(f"Event[{event_type}]({action}) model not found")
-            return
+            model = self.get_event_model(event_type, action, payload)
+            if not model:
+                logger.warning(f"Event[{event_type}]({action}) model not found")
+                continue
 
-        if should_ignore_bot(config, model):
-            logger.info(f"Event[{event_type}]({action}) ignored due to bot sender")
-            return
+            if should_ignore_bot(config, model):
+                logger.info(
+                    f"Event[{event_type}]({action}) ignored due to bot sender for handler with desc: {handler_dict['desc']}")
+                continue
 
-        if self.debug:
-            print(f"Debug Event[{event_type}]({action})")
-            print(model.model_dump())
+            if self.debug:
+                print(f"Debug Event[{event_type}]({action})")
+                print(model.model_dump())
 
+            tasks.append(self._execute_handler(handler, model))
+
+        if tasks:
+            await asyncio.gather(*tasks)
+
+    async def _execute_handler(self, handler: Callable, model: BaseModel):
+        """Helper method to execute a handler and log any exceptions."""
         try:
             await handler(model)
         except Exception as exc:
-            logger.error(f"Error executing handler for Event[{event_type}]({action}): {exc}")
+            logger.exception(f"Error executing handler: {exc}")
 
-    def is_filtered(self, event_type: str, action: str, payload: dict) -> bool:
-        """Check if the event should be filtered based on registered filter functions."""
-        filter_func = self.filters.get(event_type, {}).get(action)
-        if filter_func:
-            try:
-                return not filter_func(payload)
-            except Exception as exc:
-                logger.error(f"Error in filter function for Event[{event_type}]({action}): {exc}")
-                return True
-        return False
+    def apply_filter(self, filter_func: Callable[[dict], bool], payload: dict) -> bool:
+        """Apply the filter function to the payload."""
+        try:
+            return filter_func(payload)
+        except Exception as exc:
+            logger.error(f"Error in filter function: {exc}")
+            return False
 
     @staticmethod
     def get_event_model(event_type: Union[BaseEventType, str], action: str, payload: dict) -> Optional[BaseModel]:
