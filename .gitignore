@@ -130,3 +130,5 @@ dist
 .pnp.*
 /.pdm-python
 /.secret/
+/.idea/
+/playground/note.md
