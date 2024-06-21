@@ -171,6 +171,11 @@ app.post('/cards', async (req, res) => {
             res.status(400).send('Missing required fields');
             return;
         }
+        // Add length checks
+        if (req.body.cardId.length > 100 || req.body.openaiEndpoint.length > 100 || req.body.apiKey.length > 100 || req.body.apiModel.length > 100 || req.body.repoUrl.length > 100) {
+            res.status(400).send('Input too long');
+            return;
+        }
         const card = new Card({
             cardId: req.body.cardId,
             userId: req.user?.githubId,
@@ -193,10 +198,14 @@ app.post('/cards', async (req, res) => {
         res.status(500).send('Failed to add card');
     }
 });
-
 app.put('/cards/:id', async (req, res) => {
     try {
         const {id} = req.params;
+        // Add length checks
+        if (req.body.cardId && req.body.cardId.length > 100 || req.body.openaiEndpoint && req.body.openaiEndpoint.length > 100 || req.body.apiKey && req.body.apiKey.length > 100 || req.body.apiModel && req.body.apiModel.length > 100 || req.body.repoUrl && req.body.repoUrl.length > 100) {
+            res.status(400).send('Input too long');
+            return;
+        }
         const card = await Card.findOneAndUpdate({cardId: id, userId: req.user?.githubId}, req.body, {new: true});
         if (!card) {
             res.status(404).send('Card not found');

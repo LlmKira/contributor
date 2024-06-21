@@ -1,10 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, Button, Card, CardContent, TextField, IconButton, Grid, Switch, Snackbar, Alert, Avatar } from '@mui/material';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { v4 as uuidv4 } from 'uuid';
+import React, {useState, useEffect} from 'react';
+import {
+    Container,
+    Box,
+    Typography,
+    Button,
+    Card,
+    CardContent,
+    TextField,
+    IconButton,
+    Grid,
+    Switch,
+    Snackbar,
+    Alert,
+    Avatar,
+} from '@mui/material';
+
+import {CopyToClipboard} from 'react-copy-to-clipboard';
+import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+// import {createTheme} from '@mui/material/styles';
+import {GitHub, ContentCopy as ContentCopyIcon, Delete as DeleteIcon} from '@mui/icons-material';
 
 interface User {
     name: string;
@@ -13,6 +28,27 @@ interface User {
     accessToken: string;
 }
 
+
+const Login = ({onLogin}: { onLogin: () => void }) => (
+    <Container>
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+            textAlign: 'center'
+        }}>
+            <GitHub sx={{fontSize: '100px', mb: 2}}/>
+            <Typography variant="h4" component="h1" gutterBottom>
+                neutron-nerve
+            </Typography>
+            <Button variant="contained" color="primary" onClick={onLogin}>
+                Login with GitHub
+            </Button>
+        </Box>
+    </Container>
+);
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [cards, setCards] = useState<any[]>([]);
@@ -27,11 +63,10 @@ const App: React.FC = () => {
     });
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user`, { withCredentials: true });
+                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user`, {withCredentials: true});
                 setUser(response.data);
                 await fetchUserCards(response.data.githubId);
                 localStorage.setItem('githubToken', response.data.accessToken);
@@ -53,8 +88,8 @@ const App: React.FC = () => {
                 return;
             }
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/cards`, {
-                params: { userId },
-                headers: { Authorization: `Bearer ${localStorage.getItem('githubToken')}` }
+                params: {userId},
+                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
             });
             setCards(response.data);
         } catch (err) {
@@ -68,7 +103,7 @@ const App: React.FC = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/logout`, {}, { withCredentials: true });
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/logout`, {}, {withCredentials: true});
             setUser(null);
             setCards([]);
             localStorage.removeItem('githubToken');
@@ -93,6 +128,19 @@ const App: React.FC = () => {
             setSnackbarOpen(true);
             return;
         }
+        // Validate openaiEndpoint is a URL
+        const urlRegex = /^(https?:\/\/)?([^\s$.?#].[^\s]*)$/i;
+        if (!urlRegex.test(newCard.openaiEndpoint)) {
+            setSnackbarMessage('Invalid OpenAI Endpoint. It should be a URL.');
+            setSnackbarOpen(true);
+            return;
+        }
+        // Validate apiKey is not more than 100 characters
+        if (newCard.apiKey.length > 100) {
+            setSnackbarMessage('API Key should not exceed 100 characters.');
+            setSnackbarOpen(true);
+            return;
+        }
         try {
             if (!localStorage.getItem('githubToken')) {
                 console.log('No GitHub token found');
@@ -104,10 +152,10 @@ const App: React.FC = () => {
             }
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/cards`,
-                { ...newCard, userId: user.githubId },
+                {...newCard, userId: user.githubId},
                 {
                     withCredentials: true,
-                    headers: { Authorization: `Bearer ${localStorage.getItem('githubToken')}` }
+                    headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
                 }
             );
             setCards([...cards, response.data]);
@@ -135,7 +183,7 @@ const App: React.FC = () => {
             }
             await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, {
                 withCredentials: true,
-                headers: { Authorization: `Bearer ${localStorage.getItem('githubToken')}` }
+                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
             });
             setCards(cards.filter(card => card.cardId !== cardId));
             setSnackbarMessage('Card deleted successfully.');
@@ -148,10 +196,10 @@ const App: React.FC = () => {
     const handleToggleCard = async (cardId: string) => {
         try {
             const card = cards.find(c => c.cardId === cardId);
-            const updatedCard = { ...card, disabled: !card.disabled };
+            const updatedCard = {...card, disabled: !card.disabled};
             await axios.put(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, updatedCard, {
                 withCredentials: true,
-                headers: { Authorization: `Bearer ${localStorage.getItem('githubToken')}` }
+                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
             });
             setCards(cards.map(c => c.cardId === cardId ? updatedCard : c));
             setSnackbarMessage('Card updated successfully.');
@@ -172,129 +220,156 @@ const App: React.FC = () => {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
-            <Box sx={{ my: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    {user && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar src={`https://avatars.githubusercontent.com/u/${user.githubId}`} alt={user.name} sx={{ mr: 2 }} />
-                            <Typography variant="h6">{user.name}</Typography>
-                        </Box>
-                    )}
-                    <Box>
-                        {user ? (
-                            <Button variant="contained" onClick={handleLogout}>Logout</Button>
-                        ) : (
-                            <Button variant="contained" onClick={handleLogin}>
-                                Login with GitHub
-                            </Button>
+
+            {!user ? (
+                <Login onLogin={handleLogin}/>
+            ) : (
+                <Box sx={{my: 4}}>
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
+                        {user && (
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <Avatar src={`https://avatars.githubusercontent.com/u/${user.githubId}`} alt={user.name}
+                                        sx={{mr: 2}}/>
+                                <Typography variant="h6">{user.name}</Typography>
+                            </Box>
                         )}
-                    </Box>
-                </Box>
-
-                {user ? (
-                    <>
-                        <Card variant="outlined" sx={{ mb: 4, boxShadow: 3, transition: 'box-shadow 0.3s' }}>
-                            <CardContent>
-                                <Typography variant="h5">Add a New Card</Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="OpenAI Endpoint"
-                                            placeholder="https://api.openai.com/v1/"
-                                            fullWidth
-                                            margin="normal"
-                                            value={newCard.openaiEndpoint}
-                                            onChange={(e) => setNewCard({ ...newCard, openaiEndpoint: e.target.value })}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Model"
-                                            placeholder="gpt-4"
-                                            fullWidth
-                                            margin="normal"
-                                            value={newCard.apiModel}
-                                            onChange={(e) => setNewCard({ ...newCard, apiModel: e.target.value })}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="API Key"
-                                            placeholder="sk-123..."
-                                            fullWidth
-                                            margin="normal"
-                                            value={newCard.apiKey}
-                                            onChange={(e) => setNewCard({ ...newCard, apiKey: e.target.value })}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository URL"
-                                            placeholder="https://github.com/username/repository"
-                                            fullWidth
-                                            margin="normal"
-                                            value={newCard.repoUrl}
-                                            onChange={(e) => setNewCard({ ...newCard, repoUrl: e.target.value })}
-                                        />
-                                    </Grid>
-                                </Grid>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    sx={{ mt: 2 }}
-                                    onClick={handleAddCard}
-                                >
-                                    Add Card
-                                </Button>
-                            </CardContent>
-                        </Card>
-
                         <Box>
-                            {cards.map(card => (
-                                <Card key={card.cardId} variant="outlined" sx={{
-                                    mb: 2,
-                                    boxShadow: card.disabled ? 1 : 3,
-                                    transition: 'box-shadow 0.3s, opacity 0.3s',
-                                    opacity: card.disabled ? 0.5 : 1
-                                }}>
-                                    <CardContent sx={{ position: 'relative' }}>
-                                        <Typography variant="h6" sx={{ mb: 2 }} component={Box} sx={{ transition: 'color 0.3s', color: card.disabled ? 'text.disabled' : 'text.primary' }}>
-                                            {new URL(card.repoUrl).pathname.slice(1)}
-                                        </Typography>
-
-                                        <Box sx={{ border: '1px dashed', borderRadius: '5px', p: 1, mb: 2, display: 'flex', alignItems: 'center' }}>
-                                            <Typography variant="body1" sx={{ flex: 1 }}>UUID: {card.cardId}</Typography>
-                                            <CopyToClipboard text={card.cardId}>
-                                                <IconButton>
-                                                    <ContentCopyIcon />
-                                                </IconButton>
-                                            </CopyToClipboard>
-                                        </Box>
-                                        <Typography><strong>OpenAI Endpoint:</strong> {card.openaiEndpoint}</Typography>
-                                        <Typography><strong>Model:</strong> {card.apiModel}</Typography>
-                                        <Typography><strong>API Key:</strong> {card.apiKey}</Typography>
-                                        <Typography><strong>Repository URL:</strong> {card.repoUrl}</Typography>
-                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                            <Switch
-                                                checked={!card.disabled}
-                                                onChange={() => handleToggleCard(card.cardId)}
-                                                sx={{ mr: 1 }}
-                                            />
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="delete"
-                                                onClick={() => handleDeleteCard(card.cardId)}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                            {user ? (
+                                <Button variant="contained" onClick={handleLogout}>Logout</Button>
+                            ) : (
+                                <Button variant="contained" onClick={handleLogin}>
+                                    Login with GitHub
+                                </Button>
+                            )}
                         </Box>
-                    </>
-                ) : null}
-            </Box>
+                    </Box>
+
+                    {user ? (
+                        <>
+                            <Card variant="outlined" sx={{mb: 4, boxShadow: 3, transition: 'box-shadow 0.3s'}}>
+                                <CardContent>
+                                    <Typography variant="h5">Create Token</Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField
+                                                label="OpenAI Endpoint"
+                                                placeholder="https://api.openai.com/v1/"
+                                                fullWidth
+                                                margin="normal"
+                                                value={newCard.openaiEndpoint}
+                                                onChange={(e) => setNewCard({
+                                                    ...newCard,
+                                                    openaiEndpoint: e.target.value
+                                                })}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField
+                                                label="Model"
+                                                placeholder="gpt-4"
+                                                fullWidth
+                                                margin="normal"
+                                                value={newCard.apiModel}
+                                                onChange={(e) => setNewCard({...newCard, apiModel: e.target.value})}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField
+                                                label="API Key"
+                                                placeholder="sk-123..."
+                                                fullWidth
+                                                margin="normal"
+                                                value={newCard.apiKey}
+                                                onChange={(e) => setNewCard({...newCard, apiKey: e.target.value})}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField
+                                                label="Repository URL"
+                                                placeholder="https://github.com/username/repository"
+                                                fullWidth
+                                                margin="normal"
+                                                value={newCard.repoUrl}
+                                                onChange={(e) => setNewCard({...newCard, repoUrl: e.target.value})}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        sx={{mt: 2}}
+                                        onClick={handleAddCard}
+                                    >
+                                        Add Card
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Box>
+                                {cards.map(card => (
+                                    <Card key={card.cardId} variant="outlined" sx={{
+                                        mb: 2,
+                                        boxShadow: card.disabled ? 1 : 3,
+                                        transition: 'box-shadow 0.3s, opacity 0.3s',
+                                        opacity: card.disabled ? 0.5 : 1
+                                    }}>
+                                        <CardContent sx={{position: 'relative'}}>
+                                            <Typography variant="h6" sx={{
+                                                mb: 2,
+                                                transition: 'color 0.3s',
+                                                color: card.disabled ? 'text.disabled' : 'text.primary'
+                                            }}>
+                                                {card.repoUrl.replace(/\/$/, '').split('/').slice(-1)}
+                                            </Typography>
+
+                                            <Box sx={{
+                                                border: '1px dashed',
+                                                borderRadius: '5px',
+                                                p: 1,
+                                                mb: 2,
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}>
+                                                <Typography variant="body1"
+                                                            sx={{flex: 1}}>UUID: {card.cardId}</Typography>
+                                                <CopyToClipboard text={card.cardId}>
+                                                    <IconButton>
+                                                        <ContentCopyIcon/>
+                                                    </IconButton>
+                                                </CopyToClipboard>
+                                            </Box>
+                                            <Typography><strong>OpenAI Endpoint:</strong> {card.openaiEndpoint}
+                                            </Typography>
+                                            <Typography><strong>Model:</strong> {card.apiModel}</Typography>
+                                            <Typography><strong>API Key:</strong> {card.apiKey}</Typography>
+                                            <Typography><strong>Repository URL:</strong> {card.repoUrl}</Typography>
+                                            <Box sx={{
+                                                mt: 2,
+                                                display: 'flex',
+                                                justifyContent: 'flex-end',
+                                                alignItems: 'center'
+                                            }}>
+                                                <Switch
+                                                    checked={!card.disabled}
+                                                    onChange={() => handleToggleCard(card.cardId)}
+                                                    sx={{mr: 1}}
+                                                />
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    onClick={() => handleDeleteCard(card.cardId)}
+                                                >
+                                                    <DeleteIcon/>
+                                                </IconButton>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Box>
+                        </>
+                    ) : null}
+                </Box>
+            )}
         </Container>
     );
 };
