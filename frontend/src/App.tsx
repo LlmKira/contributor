@@ -376,7 +376,7 @@ const App: React.FC = () => {
                             </Card>
 
                             <Box>
-                                {cards.map(card => (
+                                {cards.map((card, index) => (
                                     <Card key={card.cardId} variant="outlined" sx={{
                                         mb: 2,
                                         boxShadow: card.disabled ? 1 : 3,
@@ -408,7 +408,9 @@ const App: React.FC = () => {
                                             }}>
                                                 <Typography variant="body1"
                                                             sx={{flex: 1}}>UUID: {card.cardId}</Typography>
-                                                <CopyToClipboard text={card.cardId}>
+                                                <CopyToClipboard
+                                                    text={card.cardId}
+                                                >
                                                     <IconButton>
                                                         <ContentCopyIcon/>
                                                     </IconButton>
@@ -557,12 +559,11 @@ const App: React.FC = () => {
                                                 </IconButton>
                                             </Box>
 
-                                            <Typography
-                                                variant="caption"
-                                                sx={{mt: 1, color: 'text.secondary'}}
-                                            >
-                                                双击编辑
-                                            </Typography>
+                                            {index === 0 && (
+                                                <Typography variant="caption" sx={{mt: 1, color: 'text.secondary'}}>
+                                                    Double click on a tag to edit its properties!
+                                                </Typography>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 ))}
