@@ -21,7 +21,12 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
 // import {createTheme} from '@mui/material/styles';
-import {GitHub, ContentCopy as ContentCopyIcon, Delete as DeleteIcon} from '@mui/icons-material';
+import {
+    GitHub,
+    ContentCopy as ContentCopyIcon,
+    Delete as DeleteIcon,
+    OpenInNew as OpenInNewIcon
+} from '@mui/icons-material';
 import {keyframes} from '@emotion/react';
 
 const fadeIn = keyframes`
@@ -99,7 +104,7 @@ const App: React.FC = () => {
     });
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<editState>(
         {
             cardId: "",
@@ -145,7 +150,19 @@ const App: React.FC = () => {
             (err) => console.error('Error fetching user:', err)
         );
     }, []);
-
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (confirmDelete) {
+            timer = setTimeout(() => {
+                setConfirmDelete(null);
+            }, 3000);
+        }
+        return () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        };
+    }, [confirmDelete]);
     const fetchUserCards = async (userId: string) => {
         try {
             if (!localStorage.getItem('githubToken')) {
@@ -239,20 +256,24 @@ const App: React.FC = () => {
             console.error('Error adding card:', err);
         }
     };
-
     const handleDeleteCard = async (cardId: string) => {
         try {
-            if (!localStorage.getItem('githubToken')) {
-                console.log('No GitHub token found');
-                return;
+            if (confirmDelete === cardId) {
+                if (!localStorage.getItem('githubToken')) {
+                    console.log('No GitHub token found');
+                    return;
+                }
+                await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, {
+                    withCredentials: true,
+                    headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
+                });
+                setCards(cards.filter(card => card.cardId !== cardId));
+                setSnackbarMessage('Card deleted successfully.');
+                setSnackbarOpen(true);
+                setConfirmDelete(null);
+            } else {
+                setConfirmDelete(cardId);
             }
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, {
-                withCredentials: true,
-                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-            });
-            setCards(cards.filter(card => card.cardId !== cardId));
-            setSnackbarMessage('Card deleted successfully.');
-            setSnackbarOpen(true);
         } catch (err) {
             console.error('Error deleting card:', err);
         }
@@ -277,7 +298,6 @@ const App: React.FC = () => {
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
     };
-
     return (
         <Container>
             <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar}>
@@ -408,9 +428,7 @@ const App: React.FC = () => {
                                             }}>
                                                 <Typography variant="body1"
                                                             sx={{flex: 1}}>UUID: {card.cardId}</Typography>
-                                                <CopyToClipboard
-                                                    text={card.cardId}
-                                                >
+                                                <CopyToClipboard text={card.cardId}>
                                                     <IconButton>
                                                         <ContentCopyIcon/>
                                                     </IconButton>
@@ -428,7 +446,6 @@ const App: React.FC = () => {
                                                                         fullWidth
                                                                         value={card.openaiEndpoint}
                                                                         onChange={(e) => handleChange(card.cardId, 'openaiEndpoint', e.target.value)}
-
                                                                     />
                                                                     <Button
                                                                         onClick={() => handleSave(card.cardId)}>Save</Button>
@@ -545,17 +562,28 @@ const App: React.FC = () => {
                                                 justifyContent: 'flex-end',
                                                 alignItems: 'center'
                                             }}>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    onClick={() => handleDeleteCard(card.cardId)}
+                                                    sx={{
+                                                        color: confirmDelete === card.cardId ? 'red' : 'inherit',
+                                                        transition: 'color 0.3s',
+                                                    }}
+                                                >
+                                                    <DeleteIcon/>
+                                                </IconButton>
                                                 <Switch
                                                     checked={!card.disabled}
                                                     onChange={() => handleToggleCard(card.cardId)}
                                                     sx={{mr: 1}}
                                                 />
                                                 <IconButton
-                                                    edge="end"
-                                                    aria-label="delete"
-                                                    onClick={() => handleDeleteCard(card.cardId)}
+                                                    edge="start"
+                                                    aria-label="open-repo"
+                                                    onClick={() => window.open(card.repoUrl, '_blank')}
                                                 >
-                                                    <DeleteIcon/>
+                                                    <OpenInNewIcon/>
                                                 </IconButton>
                                             </Box>
 
