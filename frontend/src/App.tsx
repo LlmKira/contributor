@@ -12,7 +12,9 @@ import {
     Switch,
     Snackbar,
     Alert,
-    Avatar,
+    Avatar, Chip,
+    TableBody,
+    Table, TableRow, TableCell,
 } from '@mui/material';
 
 import {CopyToClipboard} from 'react-copy-to-clipboard';
@@ -20,6 +22,36 @@ import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
 // import {createTheme} from '@mui/material/styles';
 import {GitHub, ContentCopy as ContentCopyIcon, Delete as DeleteIcon} from '@mui/icons-material';
+import {keyframes} from '@emotion/react';
+
+const fadeIn = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+`;
+
+const slideIn = keyframes`
+    from {
+        transform: translateX(-10px);
+    }
+    to {
+        transform: translateX(0);
+    }
+`;
+
+const highlightColor = keyframes`
+    0% {
+        background-color: transparent;
+    }
+    100% {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+`;
 
 interface User {
     name: string;
@@ -246,7 +278,12 @@ const App: React.FC = () => {
 
                     {user ? (
                         <>
-                            <Card variant="outlined" sx={{mb: 4, boxShadow: 3, transition: 'box-shadow 0.3s'}}>
+                            <Card variant="outlined" sx={{
+                                mb: 4,
+                                boxShadow: 3,
+                                transition: 'box-shadow 0.3s, transform 0.3s',
+                                animation: `${fadeIn} 0.5s`
+                            }}>
                                 <CardContent>
                                     <Typography variant="h5">Create Token</Typography>
                                     <Grid container spacing={2}>
@@ -310,14 +347,19 @@ const App: React.FC = () => {
                                     <Card key={card.cardId} variant="outlined" sx={{
                                         mb: 2,
                                         boxShadow: card.disabled ? 1 : 3,
-                                        transition: 'box-shadow 0.3s, opacity 0.3s',
-                                        opacity: card.disabled ? 0.5 : 1
+                                        transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
+                                        opacity: card.disabled ? 0.5 : 1,
+                                        animation: `${fadeIn} 0.5s`,
+                                        '&:hover': {
+                                            transform: 'scale(0.99)'
+                                        }
                                     }}>
                                         <CardContent sx={{position: 'relative'}}>
                                             <Typography variant="h6" sx={{
                                                 mb: 2,
                                                 transition: 'color 0.3s',
-                                                color: card.disabled ? 'text.disabled' : 'text.primary'
+                                                color: card.disabled ? 'text.disabled' : 'text.primary',
+                                                animation: `${slideIn} 0.5s`
                                             }}>
                                                 {card.repoUrl.replace(/\/$/, '').split('/').slice(-1)}
                                             </Typography>
@@ -328,7 +370,8 @@ const App: React.FC = () => {
                                                 p: 1,
                                                 mb: 2,
                                                 display: 'flex',
-                                                alignItems: 'center'
+                                                alignItems: 'center',
+                                                animation: `${highlightColor} 0.5s`
                                             }}>
                                                 <Typography variant="body1"
                                                             sx={{flex: 1}}>UUID: {card.cardId}</Typography>
@@ -338,11 +381,40 @@ const App: React.FC = () => {
                                                     </IconButton>
                                                 </CopyToClipboard>
                                             </Box>
-                                            <Typography><strong>OpenAI Endpoint:</strong> {card.openaiEndpoint}
-                                            </Typography>
-                                            <Typography><strong>Model:</strong> {card.apiModel}</Typography>
-                                            <Typography><strong>API Key:</strong> {card.apiKey}</Typography>
-                                            <Typography><strong>Repository URL:</strong> {card.repoUrl}</Typography>
+
+                                            <Table sx={{animation: `${fadeIn} 0.5s`}}>
+                                                <TableBody>
+                                                    <TableRow>
+                                                        <TableCell><strong>OpenAI Endpoint</strong></TableCell>
+                                                        <TableCell><Chip label={card.openaiEndpoint} sx={{
+                                                            transition: 'background-color 0.3s',
+                                                            animation: `${fadeIn} 0.5s`
+                                                        }}/></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell><strong>Model</strong></TableCell>
+                                                        <TableCell><Chip label={card.apiModel} sx={{
+                                                            transition: 'background-color 0.3s',
+                                                            animation: `${fadeIn} 0.5s`
+                                                        }}/></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell><strong>API Key</strong></TableCell>
+                                                        <TableCell><Chip label={card.apiKey} sx={{
+                                                            transition: 'background-color 0.3s',
+                                                            animation: `${fadeIn} 0.5s`
+                                                        }}/></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell><strong>Repository URL</strong></TableCell>
+                                                        <TableCell><Chip label={card.repoUrl} sx={{
+                                                            transition: 'background-color 0.3s',
+                                                            animation: `${fadeIn} 0.5s`
+                                                        }}/></TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+
                                             <Box sx={{
                                                 mt: 2,
                                                 display: 'flex',
