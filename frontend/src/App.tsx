@@ -404,7 +404,7 @@ const App: React.FC = () => {
                                         opacity: card.disabled ? 0.5 : 1,
                                         animation: `${fadeIn} 0.5s`,
                                         '&:hover': {
-                                            transform: 'scale(0.99)'
+                                            transform: 'scale(1.005)'
                                         }
                                     }}>
                                         <CardContent sx={{position: 'relative'}}>
@@ -567,7 +567,7 @@ const App: React.FC = () => {
                                                     aria-label="delete"
                                                     onClick={() => handleDeleteCard(card.cardId)}
                                                     sx={{
-                                                        color: confirmDelete === card.cardId ? 'red' : 'inherit',
+                                                        color: confirmDelete === card.cardId ? 'indianred' : 'grey',
                                                         transition: 'color 0.3s',
                                                     }}
                                                 >
