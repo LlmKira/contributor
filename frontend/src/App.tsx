@@ -193,7 +193,7 @@ const App: React.FC = () => {
 
                 {user ? (
                     <>
-                        <Card variant="outlined" sx={{ mb: 4 }}>
+                        <Card variant="outlined" sx={{ mb: 4, boxShadow: 3, transition: 'box-shadow 0.3s' }}>
                             <CardContent>
                                 <Typography variant="h5">Add a New Card</Typography>
                                 <Grid container spacing={2}>
@@ -251,10 +251,14 @@ const App: React.FC = () => {
 
                         <Box>
                             {cards.map(card => (
-                                <Card key={card.cardId} variant="outlined" sx={{ mb: 2, opacity: card.disabled ? 0.5 : 1 }}>
+                                <Card key={card.cardId} variant="outlined" sx={{
+                                    mb: 2,
+                                    boxShadow: card.disabled ? 1 : 3,
+                                    transition: 'box-shadow 0.3s, opacity 0.3s',
+                                    opacity: card.disabled ? 0.5 : 1
+                                }}>
                                     <CardContent sx={{ position: 'relative' }}>
-
-                                        <Typography variant="h6" sx={{ mb: 2 }}>
+                                        <Typography variant="h6" sx={{ mb: 2 }} component={Box} sx={{ transition: 'color 0.3s', color: card.disabled ? 'text.disabled' : 'text.primary' }}>
                                             {new URL(card.repoUrl).pathname.slice(1)}
                                         </Typography>
 
