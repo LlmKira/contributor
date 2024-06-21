@@ -242,7 +242,8 @@ app.get('/internal/cards/:cardId', async (req, res) => {
             res.status(400).send('Missing token or timeToken');
             return;
         }
-        const currentMinute = new Date().getMinutes().toString();
+        // 时间戳
+        const currentMinute = Math.floor(Date.now() / 60000).toString();
         const expectedTimeToken = crypto.createHmac('sha256', TOKEN_SECRET)
             .update(currentMinute)
             .digest('hex');
