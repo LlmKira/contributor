@@ -80,7 +80,7 @@ app.get('/auth/github/callback', async (req, res) => {
             }
             req.session.accessToken = accessToken;
             req.session.userId = user.githubId;
-            res.redirect('http://localhost:3000/');
+            res.redirect(CORS_ORIGIN);
         } catch (err) {
             console.error('Error during GitHub OAuth callback:', err);
             res.status(500).send('Authentication failed');
