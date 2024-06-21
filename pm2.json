@@ -13,7 +13,7 @@
     },
     {
       "name": "smee_proxy",
-      "script": "smee --url $PROXY_WEBHOOK_URL -t http:127.0.0.1:8888",
+      "script": "npm install && npm start",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,

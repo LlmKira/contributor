@@ -1,0 +1,17 @@
+{
+  "name": "contributor",
+  "module": "webhook_proxy.cjs",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "smee-client": "^2.0.1"
+  },
+  "scripts": {
+    "start": "node webhook_proxy.cjs"
+  }
+}
