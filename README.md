@@ -17,3 +17,4 @@ https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
 
 https://docs.github.com/zh/webhooks/using-webhooks/validating-webhook-deliveries
 
+https://github.com/PyGithub/PyGithub/blob/main/doc/examples/Issue.rst
