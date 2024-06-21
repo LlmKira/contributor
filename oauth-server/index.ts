@@ -232,23 +232,21 @@ app.delete('/cards/:id', async (req, res) => {
     }
 });
 
-// retrieve user information based on card ID
 app.get('/internal/cards/:cardId', async (req, res) => {
     try {
         const {cardId} = req.params;
-        const token = req.query.token as string;
         const timeToken = req.query.timeToken as string;
-        if (!token || !timeToken) {
-            res.status(400).send('Missing token or timeToken');
+        if (!timeToken) {
+            res.status(400).send('Missing timeToken');
             return;
         }
         // 时间戳
-        const currentMinute = Math.floor(Date.now() / 60000).toString();
+        const currentSecond = Math.floor(Date.now() / 1000).toString();
         const expectedTimeToken = crypto.createHmac('sha256', TOKEN_SECRET)
-            .update(currentMinute)
+            .update(currentSecond)
             .digest('hex');
-        if (token !== TOKEN_SECRET || timeToken !== expectedTimeToken) {
-            res.status(401).send('Invalid token or timeToken');
+        if (timeToken !== expectedTimeToken) {
+            res.status(401).send('Invalid timeToken');
             return;
         }
         const card = await Card.findOne({cardId}).exec();
