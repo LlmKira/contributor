@@ -18,8 +18,11 @@ const CALLBACK_URL = process.env.CALLBACK_URL!;
 const SESSION_SECRET = process.env.SESSION_SECRET!;
 const MONGODB_URI = process.env.MONGODB_URI!;
 const CORS_ORIGIN = process.env.CORS_ORIGIN!;
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI).then(
+const TOKEN_SECRET: string = process.env.TOKEN_SECRET!;
+
+mongoose.connect(MONGODB_URI, {
+    dbName: 'github-cards',
+}).then(
     () => {
         console.log('MongoDB connection established successfully');
     },
@@ -29,17 +32,13 @@ mongoose.connect(MONGODB_URI).then(
     }
 );
 
-
-// 针对跨域请求，设置响应头，放行前端
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
 }));
 
-// 解析请求体
 app.use(bodyParser.json());
 
-// 使用 session 中间件
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
@@ -47,7 +46,6 @@ app.use(session({
     cookie: {secure: false},
 }));
 
-// GitHub OAuth
 app.get('/auth/github', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex');
     req.session.csrfString = state;
@@ -55,7 +53,6 @@ app.get('/auth/github', (req, res) => {
     res.redirect(redirectUri);
 });
 
-// Receive the callback from GitHub OAuth
 app.get('/auth/github/callback', async (req, res) => {
     const {code, state} = req.query;
     if (state === req.session.csrfString) {
@@ -73,7 +70,6 @@ app.get('/auth/github/callback', async (req, res) => {
             const userResponse = await axios.get('https://api.github.com/user', {headers: {Authorization: `Bearer ${accessToken}`}});
             const {id, name, login} = userResponse.data;
 
-            // 查询数据库中是否有该用户，更新他的 accessToken
             let user = await User.findOne({githubId: id});
             if (!user) {
                 user = new User({githubId: id, name, login, accessToken});
@@ -99,7 +95,6 @@ app.get('/user', async (req, res) => {
     if (req.session.accessToken) {
         try {
             const user = await User.findOne({githubId: req.session.userId}).exec();
-            // 只发送给前端需要的数据
             res.json({
                 githubId: user?.githubId,
                 name: user?.name,
@@ -116,16 +111,15 @@ app.get('/user', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-        req.session.destroy((err) => {
-            if (err) {
-                res.status(500).send('Failed to logout');
-            } else {
-                res.clearCookie('connect.sid');
-                res.send('Logged out');
-            }
-        });
-    }
-);
+    req.session.destroy((err) => {
+        if (err) {
+            res.status(500).send('Failed to logout');
+        } else {
+            res.clearCookie('connect.sid');
+            res.send('Logged out');
+        }
+    });
+});
 
 app.use(async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -149,7 +143,6 @@ app.use(async (req, res, next) => {
     }
 });
 
-
 app.get('/cards', async (req, res) => {
     try {
         const {userId} = req.query;
@@ -171,7 +164,6 @@ app.post('/cards', async (req, res) => {
             res.status(400).send('Missing required fields');
             return;
         }
-        // Add length checks
         if (req.body.cardId.length > 100 || req.body.openaiEndpoint.length > 100 || req.body.apiKey.length > 100 || req.body.apiModel.length > 100 || req.body.repoUrl.length > 100) {
             res.status(400).send('Input too long');
             return;
@@ -198,10 +190,10 @@ app.post('/cards', async (req, res) => {
         res.status(500).send('Failed to add card');
     }
 });
+
 app.put('/cards/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        // Add length checks
         if (req.body.cardId && req.body.cardId.length > 100 || req.body.openaiEndpoint && req.body.openaiEndpoint.length > 100 || req.body.apiKey && req.body.apiKey.length > 100 || req.body.apiModel && req.body.apiModel.length > 100 || req.body.repoUrl && req.body.repoUrl.length > 100) {
             res.status(400).send('Input too long');
             return;
@@ -210,16 +202,14 @@ app.put('/cards/:id', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json(
-                {
-                    cardId: card.cardId,
-                    openaiEndpoint: card.openaiEndpoint,
-                    apiKey: card.apiKey,
-                    apiModel: card.apiModel,
-                    repoUrl: card.repoUrl,
-                    disabled: card.disabled,
-                }
-            )
+            res.json({
+                cardId: card.cardId,
+                openaiEndpoint: card.openaiEndpoint,
+                apiKey: card.apiKey,
+                apiModel: card.apiModel,
+                repoUrl: card.repoUrl,
+                disabled: card.disabled,
+            })
         }
     } catch (err) {
         console.error('Failed to update card:', err);
@@ -239,6 +229,45 @@ app.delete('/cards/:id', async (req, res) => {
     } catch (err) {
         console.error('Failed to delete card:', err);
         res.status(500).send('Failed to delete card');
+    }
+});
+
+// retrieve user information based on card ID
+app.get('/internal/cards/:cardId', async (req, res) => {
+    try {
+        const {cardId} = req.params;
+        const token = req.query.token as string;
+        const timeToken = req.query.timeToken as string;
+        if (!token || !timeToken) {
+            res.status(400).send('Missing token or timeToken');
+            return;
+        }
+        const currentMinute = new Date().getMinutes().toString();
+        const expectedTimeToken = crypto.createHmac('sha256', TOKEN_SECRET)
+            .update(currentMinute)
+            .digest('hex');
+        if (token !== TOKEN_SECRET || timeToken !== expectedTimeToken) {
+            res.status(401).send('Invalid token or timeToken');
+            return;
+        }
+        const card = await Card.findOne({cardId}).exec();
+        if (!card) {
+            res.status(404).send('Card not found');
+        } else {
+            const user = await User.findOne({githubId: card.userId}).exec();
+            if (!user) {
+                res.status(404).send('User not found');
+            } else {
+                res.json({
+                    githubId: user.githubId,
+                    name: user.name,
+                    login: user.login,
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch user info:', err);
+        res.status(500).send('Request failed');
     }
 });
 
