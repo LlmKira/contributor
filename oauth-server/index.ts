@@ -253,16 +253,14 @@ app.get('/internal/cards/:cardId', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            const user = await User.findOne({githubId: card.userId}).exec();
-            if (!user) {
-                res.status(404).send('User not found');
-            } else {
-                res.json({
-                    githubId: user.githubId,
-                    name: user.name,
-                    login: user.login,
-                });
-            }
+            res.json({
+                cardId: card.cardId,
+                openaiEndpoint: card.openaiEndpoint,
+                apiKey: card.apiKey,
+                apiModel: card.apiModel,
+                repoUrl: card.repoUrl,
+                disabled: card.disabled,
+            });
         }
     } catch (err) {
         console.error('Failed to fetch user info:', err);

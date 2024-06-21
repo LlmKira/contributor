@@ -11,6 +11,8 @@ class Server(BaseSettings):
     github_app_id: int = Field(None, validation_alias="GITHUB_APP_ID")
     github_private_key_file: str = Field("~/.certs/github/bot_key.pem", validation_alias="GITHUB_PRIVATE_KEY_FILE")
     github_private_key: SecretStr = SecretStr('')
+    token_secret: str = Field(None, validation_alias="TOKEN_SECRET")
+    dashboard_api_url: str = Field(None, validation_alias="DASHBOARD_API_URL")
 
     @model_validator(mode="after")
     def validator(self):
