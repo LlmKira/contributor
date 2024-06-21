@@ -1,4 +1,4 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose, {Document, Schema} from "mongoose";
 import {v4 as uuidv4} from "uuid";
 
 type CardDocument = Document & {
@@ -20,3 +20,18 @@ const CardSchema: Schema = new Schema({
     disabled: {type: Boolean, default: false},
 });
 export const Card = mongoose.model<CardDocument>('Card', CardSchema);
+
+interface IUser extends Document {
+    githubId: string;
+    name: string;
+    login: string;
+    accessToken: string;
+}
+
+const UserSchema: Schema = new Schema({
+    githubId: {type: String, required: true, unique: true},
+    name: {type: String, required: true},
+    login: {type: String, required: true},
+    accessToken: {type: String, required: true},
+});
+export const User = mongoose.model<IUser>('User', UserSchema);

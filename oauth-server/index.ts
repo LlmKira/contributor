@@ -5,11 +5,10 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import crypto from 'crypto';
-import mongoose, {Schema, Document} from 'mongoose';
+import mongoose from 'mongoose';
+import {Card, User} from "./schema.ts";
 
 dotenv.config();
-
-import {Card} from "./schema.ts";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,22 +28,6 @@ mongoose.connect(MONGODB_URI).then(
         process.exit(1);
     }
 );
-
-interface IUser extends Document {
-    githubId: string;
-    name: string;
-    login: string;
-    accessToken: string;
-}
-
-const UserSchema: Schema = new Schema({
-    githubId: {type: String, required: true, unique: true},
-    name: {type: String, required: true},
-    login: {type: String, required: true},
-    accessToken: {type: String, required: true},
-});
-
-const User = mongoose.model<IUser>('User', UserSchema);
 
 
 // 针对跨域请求，设置响应头，放行前端
@@ -197,7 +180,14 @@ app.post('/cards', async (req, res) => {
             repoUrl: req.body.repoUrl,
         })
         await card.save();
-        res.json(card);
+        res.json({
+            cardId: card.cardId,
+            openaiEndpoint: card.openaiEndpoint,
+            apiKey: card.apiKey,
+            apiModel: card.apiModel,
+            repoUrl: card.repoUrl,
+            disabled: card.disabled,
+        });
     } catch (err) {
         console.error('Failed to add card:', err);
         res.status(500).send('Failed to add card');
@@ -211,7 +201,16 @@ app.put('/cards/:id', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json(card);
+            res.json(
+                {
+                    cardId: card.cardId,
+                    openaiEndpoint: card.openaiEndpoint,
+                    apiKey: card.apiKey,
+                    apiModel: card.apiModel,
+                    repoUrl: card.repoUrl,
+                    disabled: card.disabled,
+                }
+            )
         }
     } catch (err) {
         console.error('Failed to update card:', err);
