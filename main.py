@@ -16,11 +16,11 @@ from pydantic import BaseModel, Field, SecretStr
 from app.openai import OpenAI, OpenAICredential
 from app.openai.cell import UserMessage
 from app.utils import get_repo_setting, Card, RepoSetting
-from settings.server import ServerSetting
 from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event.issues import OpenedIssueOpenEvent
 from webhook.event_type import Issue, IssueComment
 from webhook.handler import GithubWebhookHandler
+from settings.server import ServerSetting
 
 load_dotenv()
 git_integration = GithubIntegration(

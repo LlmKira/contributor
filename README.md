@@ -2,6 +2,10 @@
 
 ## 开发环境设置
 
+```
+pdm install
+```
+
 ````shell
 bun install -g smee-client
 smee --url https://smee.io/xxxxxx -t http:127.0.0.1:8080
