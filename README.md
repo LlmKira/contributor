@@ -11,7 +11,7 @@ In a nutshell, to better manage projects, we need an enhanced Issue management t
 🤖 By configuring bots with repository files, everyone can freely customize the bot. The bot will automatically handle
 repository events based on the configuration file.
 
-This project was inspired by
+🐇 This project was inspired by
 the [https://github.com/coderabbitai/ai-pr-reviewer/](https://github.com/coderabbitai/ai-pr-reviewer/) project. However,
 it's unfortunate that they have decided to close their repository and code. Using it requires additional payment, and
 although payment is necessary, I don't like closed systems and monthly billing. I prefer open, pay-as-you-go (or
