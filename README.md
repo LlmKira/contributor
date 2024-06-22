@@ -55,14 +55,13 @@ sequenceDiagram
     participant Repository
     participant GithubApp
     participant Robot
-
-    User->>Dashboard: Provides sensitive information
-    Dashboard->>User: Returns unique ID
-    User->>Repository: Provides unique ID
-    Repository->>GithubApp: Provides UUID and requests operation
-    GithubApp->>Robot: Verifies repository with UUID
-    Robot->>GithubApp: Confirms repository validity
-    GithubApp-->>Repository: Executes operation
+    User ->> Dashboard: Provides sensitive information
+    Dashboard ->> User: Returns UUID
+    User ->> Repository: Provides UUID
+    Repository ->> GithubApp: Provides UUID and requests operation
+    GithubApp ->> Robot: Verifies repository with UUID
+    Robot ->> GithubApp: Confirms repository validity
+    GithubApp -->> Repository: Executes operation
 ```
 
 ## Deploy App
