@@ -4,6 +4,8 @@
 
 # Contributor GitHub App
 
+[中文README](README_CN.md)
+
 ✨ Welcome to the Contributor GitHub App! ✨
 
 In a nutshell, to better manage projects, we need an enhanced Issue management tool. This is why I created this project.
@@ -74,25 +76,6 @@ npm install
 nano .env
 pm2 start pm2.json
 ````
-
-## Configuration
-
-### 🛠 Configuration File
-
-1. **Purpose**: Configure various aspects of the bot's behavior.
-2. **Location**: This repository contains a template configuration file.
-3. **Customization**: Adjust the template to fit your needs.
-
-### 🔐 Sensitive Information
-
-- Sensitive details such as keys should be configured through our secure panel.
-
-## Features
-
-- 📂 **Easy Repository Management**: Automated handling of repository events.
-- ⚙️ **Fully Configurable**: Tailor the bot to your exact requirements.
-- 🗂 **Template Provided**: Kickstart your setup with the provided configuration file template.
-- 🌐 **Dashboard Interface**: Intuitive web panel for managing sensitive data and key configurations.
 
 ## Acknowledgements
 
