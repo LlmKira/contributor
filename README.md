@@ -38,6 +38,33 @@ such as keys can be configured through my panel.
 | 📚 ~~**Documentation**~~        | Automatically translate documentation.                                  | -                         |
 | 📌 ~~**Issue Title Standard**~~ | Standardize issue titles.                                               | `issue_auto_tidy`         |
 
+## How to Use
+
+1. **Install the App**: Install the app to your repository.
+2. **Get Repo Token**: Add apikeys and other sensitive information to
+   the [Dashboard](https://contributor.dianas.cyou).
+3. **Build the `.nerve.toml` File**: Create a configuration file based on the template. [Example](.nerve.toml)
+
+> **Note**: The panel is only used to store API-related keys. You fill in the UUID to your repository, and GithubApp
+> collaborates with the repository to finally obtain the customized configuration.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Dashboard
+    participant Repository
+    participant GithubApp
+    participant Robot
+
+    User->>Dashboard: Provides sensitive information
+    Dashboard->>User: Returns unique ID
+    User->>Repository: Provides unique ID
+    Repository->>GithubApp: Provides UUID and requests operation
+    GithubApp->>Robot: Verifies repository with UUID
+    Robot->>GithubApp: Confirms repository validity
+    GithubApp-->>Repository: Executes operation
+```
+
 ## Deploy App
 
 To deploy the app locally, follow these easy steps:
