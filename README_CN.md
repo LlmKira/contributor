@@ -59,6 +59,41 @@ sequenceDiagram
     GithubApp -->> 仓库: 执行操作
 ```
 
+## 定制操作
+
+看起来项目很复杂，其实很简单就能添加一些新操作，Github 通过 Webhook 传递的事件，我们只需要处理这些事件，然后执行我们的操作。
+
+请你打开 [main.py](main.py) 文件，然后添加你的操作。
+
+一份新的监听例子：
+
+```python
+webhook_handler = ...
+git_integration = ...
+get_repo_setting = ...
+logger = ...
+from webhook.event.issue_comment import CreateIssueCommentEvent
+from webhook.event_type import IssueComment
+
+
+@webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
+async def handle_issue_comment(event: CreateIssueCommentEvent):
+    logger.info("Received IssueComment.CREATED event")
+    repo_setting = get_repo_setting(
+        repo_name=event.repository.full_name,
+        repo=event.repository.get_repo(git_integration)
+    )
+    # repo_setting 就是 .nerve.toml 文件的内容模型
+    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+    comment = issue.create_comment(f"Hello World!")
+    issue.get_comment(comment.id).edit("Hello World! Edited")
+    print(f"Issue: {event.issue.title}")
+    print(f"Comment: {event.comment.body}")
+    print(f"Repo: {event.repository.full_name}")
+```
+
+同样的事件可以有多个监听器，只要你的监听器有不同的 `unique_id`。
+
 ## 部署应用
 
 按以下简单步骤在本地部署应用：

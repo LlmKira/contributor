@@ -66,6 +66,42 @@ sequenceDiagram
     GithubApp -->> Repository: Executes operation
 ```
 
+## Custom Operations
+
+Although the project may seem complex, adding new operations is actually quite simple. GitHub passes events through
+webhooks, and we only need to handle these events and then execute our operations.
+
+Please open the [main.py](main.py) file and add your custom operations.
+
+Here is an example of a new listener:
+
+```python
+webhook_handler = ...
+git_integration = ...
+get_repo_setting = ...
+logger = ...
+from webhook.event.issue_comment import CreateIssueCommentEvent
+from webhook.event_type import IssueComment
+
+
+@webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
+async def handle_issue_comment(event: CreateIssueCommentEvent):
+    logger.info("Received IssueComment.CREATED event")
+    repo_setting = get_repo_setting(
+        repo_name=event.repository.full_name,
+        repo=event.repository.get_repo(git_integration)
+    )
+    # repo_setting is the content of the .nerve.toml file
+    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+    comment = issue.create_comment(f"Hello World!")
+    issue.get_comment(comment.id).edit("Hello World! Edited")
+    print(f"Issue: {event.issue.title}")
+    print(f"Comment: {event.comment.body}")
+    print(f"Repo: {event.repository.full_name}")
+```
+
+The same event can have multiple listeners, as long as each listener has a different `unique_id`.
+
 ## Deploy App
 
 To deploy the app locally, follow these easy steps:
