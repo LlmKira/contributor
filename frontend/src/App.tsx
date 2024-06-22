@@ -151,7 +151,7 @@ const App: React.FC = () => {
         );
     }, []);
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        let timer: Timer;
         if (confirmDelete) {
             timer = setTimeout(() => {
                 setConfirmDelete(null);
@@ -459,7 +459,7 @@ const App: React.FC = () => {
                                                                         '&:hover': {
                                                                             backgroundColor: 'lightblue',
                                                                             cursor: 'pointer'
-                                                                        }
+                                                                        },
                                                                     }}
                                                                     onDoubleClick={() => handleDoubleClick(card.cardId, 'openaiEndpoint')}
                                                                 />
