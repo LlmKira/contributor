@@ -18,6 +18,8 @@ such as keys can be configured through my panel.
 
 [**Access the Dashboard**](https://contributor.dianas.cyou)
 
+[**Get AI Service all-in-one**](https://www.ohmygpt.com/)
+
 ## Features
 
 | Feature                         | Description                                                             | Configuration Section     |
@@ -76,7 +78,8 @@ This project have no license.
 
 ## Contributing
 
-We welcome contributions! Please check out our [contributing guidelines](CONTRIBUTOR_LICENSE_AGREEMENT) for more information.
+We welcome contributions! Please check out our [contributing guidelines](CONTRIBUTOR_LICENSE_AGREEMENT) for more
+information.
 
 ## ⭐️ Star us
 
