@@ -109,6 +109,7 @@ To deploy the app locally, follow these easy steps:
 ````shell
 pdm install
 npm install
+cp .env.example .env
 nano .env
 pm2 start pm2.json
 ````

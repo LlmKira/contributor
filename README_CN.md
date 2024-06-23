@@ -101,6 +101,7 @@ async def handle_issue_comment(event: CreateIssueCommentEvent):
 ```shell
 pdm install
 npm install
+cp .env.example .env
 nano .env
 pm2 start pm2.json
 ```
