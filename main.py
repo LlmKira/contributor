@@ -16,11 +16,11 @@ from pydantic import BaseModel, Field, SecretStr
 from app.openai import OpenAI, OpenAICredential
 from app.openai.cell import UserMessage
 from app.utils import get_repo_setting, Card, RepoSetting
+from settings.server import ServerSetting
 from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event.issues import OpenedIssueOpenEvent
 from webhook.event_type import Issue, IssueComment
 from webhook.handler import GithubWebhookHandler
-from settings.server import ServerSetting
 
 load_dotenv()
 git_integration = GithubIntegration(
@@ -43,11 +43,11 @@ async def fetch_credit(card_id):
                 data = await response.json()
                 return Card.model_validate(data)
             elif response.status == 400:
-                raise Exception("Missing timeToken")
+                raise Exception(f"Missing timeToken {card_id}")
             elif response.status == 401:
-                raise Exception("Invalid timeToken")
+                raise Exception(f"Invalid timeToken {card_id}")
             elif response.status == 404:
-                logger.warning("Card or User not found")
+                logger.warning(f"Card or User not found {card_id}")
                 return None
             else:
                 raise Exception(f"Request failed with status: {response.status}")
