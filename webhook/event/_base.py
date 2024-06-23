@@ -114,7 +114,8 @@ class Repository(BaseModel):
     archived: bool
     disabled: bool
     open_issues_count: int
-    license: Optional[str]
+    license: Optional[dict]
+    topics: list
     allow_forking: bool
     is_template: bool
 
