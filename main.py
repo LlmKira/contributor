@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # @Author  : sudoskys
-import asyncio
 import hashlib
 import hmac
 import os
@@ -13,16 +12,15 @@ from github import GithubIntegration
 from loguru import logger
 from pydantic import BaseModel, Field, SecretStr
 
-from app.openai import OpenAI, OpenAICredential
+from app.openai import OpenAI, OpenAICredential, OpenAIResult
 from app.openai.cell import UserMessage
 from app.utils import get_repo_setting, Card, RepoSetting
 from settings.server import ServerSetting
-from webhook.event.issue_comment import CreateIssueCommentEvent
-from webhook.event.issues import OpenedIssueOpenEvent
-from webhook.event_type import Issue, IssueComment
+from webhook.event_type import Issue
 from webhook.handler import GithubWebhookHandler
 
 load_dotenv()
+
 git_integration = GithubIntegration(
     integration_id=ServerSetting.github_app_id,
     private_key=ServerSetting.github_private_key.get_secret_value(),
@@ -73,8 +71,8 @@ if webhook_handler.debug:
     print("Debug mode enabled")
 
 
-@webhook_handler.listen(Issue, action=Issue.OPENED, unique_id="Issue opened")
-async def handle_issue_open(event: OpenedIssueOpenEvent):
+@webhook_handler.listen(Issue, action=Issue.OPENED, unique_id="issue_auto_label")
+async def issue_auto_label(event: Issue.OPENED_EVENT):
     # TODO: 检索历史 issue，然后自动标记
     logger.info("Received Issue.OPEN event")
     # 先查找仓库的设置
@@ -94,7 +92,7 @@ async def handle_issue_open(event: OpenedIssueOpenEvent):
     issue = event.get_issue(integration=git_integration)
     # 查找有哪些标签
     labels = event.repository.get_repo(git_integration).get_labels()
-    logger.debug(f"Get labels {labels}")
+    logger.debug(f"Get labels {labels.__str__()}")
 
     # 询问 AI
     class Label(BaseModel):
@@ -125,21 +123,73 @@ async def handle_issue_open(event: OpenedIssueOpenEvent):
         issue.add_to_labels(*extract_label.best_labels[:3])
 
 
-@webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="Issue comment created")
-async def handle_issue_comment(event: CreateIssueCommentEvent):
-    logger.info("Received IssueComment.CREATED event")
+@webhook_handler.listen(Issue, action=Issue.CLOSED, unique_id="close_issue_with_report")
+async def close_issue_with_report(event: Issue.CLOSED_EVENT):
+    logger.info("Received Issue.CLOSED event")
     # 先查找仓库的设置
     repo_setting = get_repo_setting(
         repo_name=event.repository.full_name,
         repo=event.repository.get_repo(git_integration)
     )
+    if not repo_setting.issue_close_with_report:
+        return logger.debug("Issue close with report is disabled")
+    try:
+        oai_credit, oai_credential = await get_credit(repo_setting)
+    except Exception as e:
+        return logger.info(f"Skip get credit: {e}")
+    oai_body = []
     issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
-    return
-    comment = issue.create_comment(f"Hello World!")
-    await asyncio.sleep(5)
-    issue.get_comment(comment.id).edit("Hello World! Edited")  # 编辑一个评论需要 comment id 和 issue number，还有
-    print(f"Issue: {event.issue.title}")
-    print(f"Comment: {event.comment.body}")
+    oai_body.append(f"Issue: {event.issue.title}")
+    oai_body.append(f"Content: {event.issue.body}")
+    comments = issue.get_comments()
+    selected_comments = {}
+    if comments:
+        # 只获取第一个和最后一个评论
+        if len(comments) > 2:
+            selected_comments[comments[0].id] = comments[0]
+            selected_comments[comments[-1].id] = comments[-1]
+            # 创建反应表并选择两个最高的评论
+            reaction_table = [(comment.reactions.get("total_count", 0), comment) for comment in comments]
+            top_reactions = sorted(reaction_table, key=lambda x: x[0], reverse=True)[:2]
+            for count, comment in top_reactions:
+                if count > 0:
+                    selected_comments[comment.id] = comment
+        else:
+            selected_comments = {comment.id: comment for comment in comments}
+        # 按照 ID 排序，小的在前面
+        selected_comments = dict(sorted(selected_comments.items(), key=lambda x: x[0]))
+        # 加入评论
+        for comment in selected_comments.values():
+            oai_body.append(
+                f"Comment#{comment.id}:\n"
+                f" @{comment.user.login} said:"
+                f" {comment.body}\n"
+            )
+        if issue.pull_request:
+            oai_body.append(f"Pull Request: {issue.pull_request.html_url}")
+        oai_body.append(f"Report Using Language: {repo_setting.language}")
+
+    try:
+        report: OpenAIResult = await OpenAI(
+            model=oai_credit.apiModel,
+            messages=[
+                UserMessage(content="\n".join(oai_body)),
+                UserMessage(
+                    content="Should include the title, summary, and solution three parts, "
+                            " and the report should be concise and clear."
+                            "You can also use mermaid to draw a flowchart.\n"
+                            "**Please write a report for this issue in Markdown format.**"
+                )
+            ]).request(
+            session=oai_credential
+        )
+        assert report.default_message.content, "Empty report"
+    except Exception as e:
+        logger.error(f"Failed to get report: {e}")
+        return
+    else:
+        logger.info(f"Add report to issue {event.issue.html_url}")
+        issue.create_comment(report.default_message.content)
 
 
 if __name__ == "__main__":
