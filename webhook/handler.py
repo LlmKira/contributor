@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from loguru import logger
 from pydantic import BaseModel
 
+from .const import GITHUB_CACHE_EXPIRE, GITHUB_CACHE
 from .event_parser import parse_event
 from .event_type import EVENT_MODEL, BaseEventType
 from .exception import InvalidRequestError
@@ -54,9 +55,9 @@ class GithubWebhookHandler:
                 raw_body = await request.body()
                 try:
                     event = parse_event(headers, raw_body, self.webhook_secret)
-                except InvalidRequestError as e:
+                except InvalidRequestError as exc:
                     # docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
-                    logger.error(f"Invalid webhook request: {e}")
+                    logger.error(f"Invalid webhook request: {exc}")
                     return {
                         "status": "error",
                         "details": "Invalid webhook request",
@@ -64,9 +65,40 @@ class GithubWebhookHandler:
                 if event.name and event.payload.get("action"):
                     await self.handle_event(event.name, event.payload["action"], event.payload)
                 return {"status": "ok"}
-            except Exception as e:
-                logger.error(f"Webhook listener encountered an error: {e}")
+            except Exception as exc:
+                logger.error(f"Webhook listener encountered an error: {exc}")
                 return {"status": "error", "details": "Server encountered an error, check logs for details"}
+
+    def register_listener(
+            self,
+            event_type: Union[BaseEventType, str],
+            action: str,
+            unique_id: str,
+            handler: Callable,
+            desc: str = "listener",
+            filter_func: Optional[Callable[[dict], bool]] = None,
+            config: HandlerConfig = HandlerConfig()
+    ):
+        """
+        Register a handler for a specific GitHub event type and action without using a decorator.
+        """
+        if not isinstance(event_type, str):
+            event_type = str(event_type)
+        event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {})
+        if unique_id in event_handlers:
+            logger.warning(
+                f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
+                f"old handler will be replaced."
+            )
+        event_handlers[unique_id] = {
+            "desc": desc,
+            "handler": handler,
+            "filter_func": filter_func,
+            "config": config
+        }
+        logger.info(
+            f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}"
+        )
 
     def listen(
             self,
@@ -86,7 +118,9 @@ class GithubWebhookHandler:
 
             if unique_id in event_handlers:
                 logger.warning(
-                    f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), old handler will be replaced.")
+                    f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
+                    f"old handler will be replaced."
+                )
             event_handlers[unique_id] = {
                 "desc": desc,
                 "handler": func,
@@ -132,7 +166,8 @@ class GithubWebhookHandler:
 
             if should_ignore_bot(config, model):
                 logger.info(
-                    f"Event[{event_type}]({action}) ignored due to bot sender for handler with desc: {handler_dict['desc']}")
+                    f"Event[{event_type}]({action}) ignored due to bot sender "
+                    f"for handler with desc: {handler_dict['desc']}")
                 continue
 
             if self.debug:
@@ -144,14 +179,16 @@ class GithubWebhookHandler:
         if tasks:
             await asyncio.gather(*tasks)
 
-    async def _execute_handler(self, handler: Callable, model: BaseModel):
+    @staticmethod
+    async def _execute_handler(handler: Callable, model: BaseModel):
         """Helper method to execute a handler and log any exceptions."""
         try:
             await handler(model)
         except Exception as exc:
             logger.exception(f"Error executing handler: {exc}")
 
-    def apply_filter(self, filter_func: Callable[[dict], bool], payload: dict) -> bool:
+    @staticmethod
+    def apply_filter(filter_func: Callable[[dict], bool], payload: dict) -> bool:
         """Apply the filter function to the payload."""
         try:
             return filter_func(payload)
@@ -188,3 +225,21 @@ class GithubWebhookHandler:
         server = uvicorn.Server(config)
         logger.info(f"Starting server at {host}:{port}")
         server.run()
+
+
+try:
+    if GITHUB_CACHE:
+        import requests_cache
+
+        requests_cache.install_cache(
+            cache_control=True,
+            urls_expire_after={
+                '*.github.com': GITHUB_CACHE_EXPIRE,
+                # Placeholder expiration; should be overridden by Cache-Control
+                '*': requests_cache.DO_NOT_CACHE,
+                # Don't cache anything other than GitHub requests
+            },
+        )
+        logger.info("PyGithub cache installed")
+except Exception as e:
+    logger.error(f"Failed to install cache: {e}, do you have requests_cache installed?")
