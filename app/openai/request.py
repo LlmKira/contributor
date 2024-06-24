@@ -168,7 +168,8 @@ class OpenAI(BaseModel):
     def check_vision(self):
         if not self.model.startswith(VISION):
             logger.info(
-                f"Try to remove the image content part from the messages, because the model is not supported {self.model}"
+                f"Try to remove the image content part from the messages, "
+                f"because the model is not supported {self.model}"
             )
             for message in self.messages:
                 if isinstance(message, UserMessage) and isinstance(
