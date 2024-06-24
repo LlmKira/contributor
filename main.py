@@ -182,7 +182,7 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT):
                             "The report should be concise and clear."
                             "Summarize the problems users encountered and how they were solved."
                             "You can also use `mermaid` to draw a flowchart.\n"
-                            "**Please write a report for this issue.**"
+                            "**Please write a closed report for this issue.**"
                 )
             ]).request(
             session=oai_credential
