@@ -145,7 +145,7 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT):
     selected_comments = {}
     if comments:
         # 只获取第一个和最后一个评论
-        if len(comments) > 2:
+        if comments.totalCount > 2:
             selected_comments[comments[0].id] = comments[0]
             selected_comments[comments[-1].id] = comments[-1]
             # 创建反应表并选择两个最高的评论
