@@ -99,7 +99,8 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
         best_labels: List[str] = Field([], description="few best labels")
 
     prompt = (
-        f"Issue: {event.issue.title}\nBody: {event.issue.body}"
+        f"Issue: {event.issue.title}"
+        f"\nBody: {event.issue.body}"
         f"\nIssue URL: {event.issue.html_url}"
         f"\nLabels: {', '.join([label.name for label in labels])}"
         f"\n\nPlease select the most appropriate label for this issue."
