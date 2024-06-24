@@ -72,12 +72,11 @@ webhook_handler = ...
 git_integration = ...
 get_repo_setting = ...
 logger = ...
-from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event_type import IssueComment
 
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
-async def handle_issue_comment(event: CreateIssueCommentEvent):
+async def handle_issue_comment(event: IssueComment.CREATED_EVENT):
     logger.info("Received IssueComment.CREATED event")
     repo_setting = get_repo_setting(
         repo_name=event.repository.full_name,
