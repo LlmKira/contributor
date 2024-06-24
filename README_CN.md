@@ -30,7 +30,7 @@
 | 🌐 **仪表板**         | 用于管理敏感数据和密钥配置的直观网页面板。 | -                         |
 | 📂 **自动标签**        | 根据配置文件自动给问题打标签。       | `issue_auto_label`        |
 | 🗂 ~~**问题总结**~~    | 根据配置文件生成问题的总结。        | -                         |
-| 📝 ~~**问题关闭报告**~~  | 当问题关闭时生成报告。           | `issue_close_with_report` |
+| 📝 **问题关闭报告**      | 当问题关闭时生成报告。           | `issue_close_with_report` |
 | 📦 ~~**发布说明**~~    | 根据配置文件生成发布说明。         | -                         |
 | 📚 ~~**文档翻译**~~    | 自动翻译文档。               | -                         |
 | 📌 ~~**问题标题标准化**~~ | 标准化问题标题。              | `issue_auto_tidy`         |
@@ -72,12 +72,11 @@ webhook_handler = ...
 git_integration = ...
 get_repo_setting = ...
 logger = ...
-from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event_type import IssueComment
 
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
-async def handle_issue_comment(event: CreateIssueCommentEvent):
+async def handle_issue_comment(event: IssueComment.CREATED_EVENT):
     logger.info("Received IssueComment.CREATED event")
     repo_setting = get_repo_setting(
         repo_name=event.repository.full_name,

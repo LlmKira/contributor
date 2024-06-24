@@ -35,7 +35,7 @@ such as keys can be configured through my panel.
 | 🌐 **Dashboard**                | Intuitive web panel for managing sensitive data and key configurations. | -                         |
 | 📂 **Auto Labeling**            | Automatically label issues based on the configuration file.             | `issue_auto_label`        |
 | 🗂 ~~**Issue Summary**~~        | Generate a summary of issues based on the configuration file.           | -                         |
-| 📝 ~~**Issue Closed Report**~~  | Generate a report when an issue is closed.                              | `issue_close_with_report` |
+| 📝 **Issue Closed Report**      | Generate a report when an issue is closed.                              | `issue_close_with_report` |
 | 📦 ~~**Release Note**~~         | Generate release notes based on the configuration file.                 | -                         |
 | 📚 ~~**Documentation**~~        | Automatically translate documentation.                                  | -                         |
 | 📌 ~~**Issue Title Standard**~~ | Standardize issue titles.                                               | `issue_auto_tidy`         |
@@ -80,24 +80,23 @@ webhook_handler = ...
 git_integration = ...
 get_repo_setting = ...
 logger = ...
-from webhook.event.issue_comment import CreateIssueCommentEvent
 from webhook.event_type import IssueComment
 
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
-async def handle_issue_comment(event: CreateIssueCommentEvent):
-    logger.info("Received IssueComment.CREATED event")
-    repo_setting = get_repo_setting(
-        repo_name=event.repository.full_name,
-        repo=event.repository.get_repo(git_integration)
-    )
-    # repo_setting is the content of the .nerve.toml file
-    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
-    comment = issue.create_comment(f"Hello World!")
-    issue.get_comment(comment.id).edit("Hello World! Edited")
-    print(f"Issue: {event.issue.title}")
-    print(f"Comment: {event.comment.body}")
-    print(f"Repo: {event.repository.full_name}")
+async def handle_issue_comment(event: IssueComment.CREATED_EVENT):
+   logger.info("Received IssueComment.CREATED event")
+   repo_setting = get_repo_setting(
+      repo_name=event.repository.full_name,
+      repo=event.repository.get_repo(git_integration)
+   )
+   # repo_setting is the content of the .nerve.toml file
+   issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+   comment = issue.create_comment(f"Hello World!")
+   issue.get_comment(comment.id).edit("Hello World! Edited")
+   print(f"Issue: {event.issue.title}")
+   print(f"Comment: {event.comment.body}")
+   print(f"Repo: {event.repository.full_name}")
 ```
 
 The same event can have multiple listeners, as long as each listener has a different `unique_id`.

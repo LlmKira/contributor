@@ -246,6 +246,7 @@ app.get('/internal/cards/:cardId', async (req, res) => {
             .update(currentSecond)
             .digest('hex');
         if (timeToken !== expectedTimeToken) {
+            console.error('Invalid timeToken:', timeToken, 'expected:', expectedTimeToken);
             res.status(401).send('Invalid timeToken');
             return;
         }
