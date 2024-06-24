@@ -13,7 +13,7 @@ from loguru import logger
 from pydantic import BaseModel, Field, SecretStr
 
 from app.openai import OpenAI, OpenAICredential, OpenAIResult
-from app.openai.cell import UserMessage
+from app.openai.cell import UserMessage, SystemMessage
 from app.utils import get_repo_setting, Card, RepoSetting
 from settings.server import ServerSetting
 from webhook.event_type import Issue
@@ -174,11 +174,13 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT):
         report: OpenAIResult = await OpenAI(
             model=oai_credit.apiModel,
             messages=[
+                SystemMessage(content="You are a github bot, you are helping to close the issue."),
                 UserMessage(content="\n".join(oai_body)),
                 UserMessage(
                     content="Give a **report** based on the information you have. "
                             "*If it is not mentioned in the text, then there is no need to write it.*"
                             "The report should be concise and clear."
+                            "Summarize the problems users encountered and how they were solved."
                             "You can also use `mermaid` to draw a flowchart.\n"
                             "**Please write a report for this issue.**"
                 )
