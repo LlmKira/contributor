@@ -105,6 +105,7 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
         f"\n\nPlease select the most appropriate label for this issue."
         f"\nThe number of labels is limited to 0～3."
     )
+    logger.debug(f"Prompt: {prompt}")
     # 询问 AI
     try:
         extract_label: Label = await OpenAI(
@@ -168,17 +169,18 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT):
         if issue.pull_request:
             oai_body.append(f"Pull Request: {issue.pull_request.html_url}")
         oai_body.append(f"Report Using Language: {repo_setting.language}")
-
+    logger.debug(f"Prompt: {oai_body}")
     try:
         report: OpenAIResult = await OpenAI(
             model=oai_credit.apiModel,
             messages=[
                 UserMessage(content="\n".join(oai_body)),
                 UserMessage(
-                    content="Should include the title, summary, and solution three parts, "
-                            " and the report should be concise and clear."
-                            "You can also use mermaid to draw a flowchart.\n"
-                            "**Please write a report for this issue in Markdown format.**"
+                    content="Give a **report** based on the information you have. "
+                            "*If it is not mentioned in the text, then there is no need to write it.*"
+                            "The report should be concise and clear."
+                            "You can also use `mermaid` to draw a flowchart.\n"
+                            "**Please write a report for this issue.**"
                 )
             ]).request(
             session=oai_credential
