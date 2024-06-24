@@ -2,7 +2,8 @@
 import asyncio
 import logging
 from functools import wraps
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Optional
+from typing import Dict, Union
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -32,6 +33,14 @@ class InterceptHandler(logging.Handler):
         loguru_logger.log(record.levelname, record.getMessage())
 
 
+class Handler:
+    def __init__(self, handler: Callable, desc: str, filter_func: Optional[Callable], config: HandlerConfig):
+        self.handler = handler
+        self.desc = desc
+        self.filter_func = filter_func
+        self.config = config
+
+
 class GithubWebhookHandler:
     def __init__(self, log_server: bool = False, webhook_secret: Optional[str] = None):
         """
@@ -41,7 +50,7 @@ class GithubWebhookHandler:
         """
         self.app = FastAPI()
         self.handlers: Dict[
-            str, Dict[str, Dict[str, Dict[str, Union[str, Callable, HandlerConfig, Optional[Callable]]]]]] = {}
+            str, Dict[str, Dict[int, Dict[str, Handler]]]] = {}
         self.debug: bool = False
         self.log_server = log_server
         self.webhook_secret = webhook_secret
@@ -56,14 +65,12 @@ class GithubWebhookHandler:
                 try:
                     event = parse_event(headers, raw_body, self.webhook_secret)
                 except InvalidRequestError as exc:
-                    # docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
                     logger.error(f"Invalid webhook request: {exc}")
-                    return {
-                        "status": "error",
-                        "details": "Invalid webhook request",
-                    }
+                    return {"status": "error", "details": "Invalid webhook request"}
+
                 if event.name and event.payload.get("action"):
                     await self.handle_event(event.name, event.payload["action"], event.payload)
+
                 return {"status": "ok"}
             except Exception as exc:
                 logger.error(f"Webhook listener encountered an error: {exc}")
@@ -77,25 +84,28 @@ class GithubWebhookHandler:
             handler: Callable,
             desc: str = "listener",
             filter_func: Optional[Callable[[dict], bool]] = None,
-            config: HandlerConfig = HandlerConfig()
+            config: HandlerConfig = HandlerConfig(),
+            priority: int = 10
     ):
         """
         Register a handler for a specific GitHub event type and action without using a decorator.
         """
         if not isinstance(event_type, str):
             event_type = str(event_type)
-        event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {})
+
+        event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {}).setdefault(priority, {})
         if unique_id in event_handlers:
             logger.warning(
                 f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
                 f"old handler will be replaced."
             )
-        event_handlers[unique_id] = {
-            "desc": desc,
-            "handler": handler,
-            "filter_func": filter_func,
-            "config": config
-        }
+
+        event_handlers[unique_id] = Handler(
+            handler=handler,
+            desc=desc,
+            filter_func=filter_func,
+            config=config,
+        )
         logger.info(
             f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}"
         )
@@ -108,28 +118,30 @@ class GithubWebhookHandler:
             desc: str = "listener",
             filter_func: Optional[Callable[[dict], bool]] = None,
             config: HandlerConfig = HandlerConfig(),
+            priority: int = 10
     ):
         if not isinstance(event_type, str):
             event_type = str(event_type)
 
         def decorator(func: Callable):
             """Register a handler for a specific GitHub event type and action."""
-            event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {})
+            event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {}).setdefault(priority, {})
 
             if unique_id in event_handlers:
                 logger.warning(
                     f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
                     f"old handler will be replaced."
                 )
-            event_handlers[unique_id] = {
-                "desc": desc,
-                "handler": func,
-                "filter_func": filter_func,
-                "config": config
-            }
+            event_handlers[unique_id] = Handler(
+                handler=func,
+                desc=desc,
+                filter_func=filter_func,
+                config=config
+            )
 
             logger.info(
-                f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}")
+                f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}"
+            )
 
             @wraps(func)
             async def wrapped_function(*args, **kwargs):
@@ -145,39 +157,43 @@ class GithubWebhookHandler:
 
     async def handle_event(self, event_type: str, action: str, payload: dict):
         """Handle incoming GitHub webhook events."""
-        handlers = self.handlers.get(event_type, {}).get(action, {}).values()
-        if not handlers:
-            logger.debug(f"Event[{event_type}]({action}) received")
+        handlers_per_priority = self.handlers.get(event_type, {}).get(action, {})
+        if not handlers_per_priority:
+            logger.debug(f"Event[{event_type}]({action}) received, no handlers registered.")
             return
-        tasks = []
-        for handler_dict in handlers:
-            handler = handler_dict["handler"]
-            config = handler_dict["config"]
-            filter_func = handler_dict["filter_func"]
 
-            if filter_func and not self.apply_filter(filter_func, payload):
-                logger.info(f"Event[{event_type}]({action}) filtered for handler with desc: {handler_dict['desc']}")
-                continue
+        for priority in sorted(handlers_per_priority.keys()):
+            handlers = handlers_per_priority[priority].values()
+            tasks = []
+            for handler_obj in handlers:
+                handler = handler_obj.handler
+                config = handler_obj.config
+                filter_func = handler_obj.filter_func
 
-            model = self.get_event_model(event_type, action, payload)
-            if not model:
-                logger.warning(f"Event[{event_type}]({action}) model not found")
-                continue
+                if filter_func and not self.apply_filter(filter_func, payload):
+                    logger.info(f"Event[{event_type}]({action}) filtered for handler with desc: {handler_obj.desc}")
+                    continue
 
-            if should_ignore_bot(config, model):
-                logger.info(
-                    f"Event[{event_type}]({action}) ignored due to bot sender "
-                    f"for handler with desc: {handler_dict['desc']}")
-                continue
+                model = self.get_event_model(event_type, action, payload)
+                if not model:
+                    logger.warning(f"Event[{event_type}]({action}) model not found")
+                    continue
 
-            if self.debug:
-                print(f"Debug Event[{event_type}]({action})")
-                print(model.model_dump())
+                if should_ignore_bot(config, model):
+                    logger.info(
+                        f"Event[{event_type}]({action}) ignored due to bot sender "
+                        f"for handler with desc: {handler_obj.desc}"
+                    )
+                    continue
 
-            tasks.append(self._execute_handler(handler, model))
+                if self.debug:
+                    print(f"Debug Event[{event_type}]({action})")
+                    print(model.model_dump())
 
-        if tasks:
-            await asyncio.gather(*tasks)
+                tasks.append(self._execute_handler(handler, model))
+
+            if tasks:
+                await asyncio.gather(*tasks)
 
     @staticmethod
     async def _execute_handler(handler: Callable, model: BaseModel):
