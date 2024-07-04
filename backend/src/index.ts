@@ -39,11 +39,14 @@ function createUserId(provider: string, providerUserId: string): string {
     return `${provider}:${providerUserId}`;
 }
 
-const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    limit: 100
-    // limit each IP to 100 requests per windowMs
-});
+const limiter = rateLimit(
+    {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 100
+        // limit each IP to 100 requests per windowMs
+    }
+);
+
 app.use(limiter);
 app.use(cors({
     origin: CORS_ORIGIN,
