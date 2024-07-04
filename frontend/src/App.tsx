@@ -22,12 +22,12 @@ import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
 // import {createTheme} from '@mui/material/styles';
 import {
-    GitHub,
     ContentCopy as ContentCopyIcon,
     Delete as DeleteIcon,
     OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import {keyframes} from '@emotion/react';
+import GithubLogin, {handleGithubLogin} from "./login/Github.tsx";
 
 const fadeIn = keyframes`
     from {
@@ -70,26 +70,6 @@ interface editState {
     field: string;
 }
 
-const Login = ({onLogin}: { onLogin: () => void }) => (
-    <Container>
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100vh',
-            textAlign: 'center'
-        }}>
-            <GitHub sx={{fontSize: '100px', mb: 2}}/>
-            <Typography variant="h4" component="h1" gutterBottom>
-                neutron-nerve
-            </Typography>
-            <Button variant="contained" color="primary" onClick={onLogin}>
-                Login with GitHub
-            </Button>
-        </Box>
-    </Container>
-);
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [cards, setCards] = useState<any[]>([]);
@@ -179,10 +159,6 @@ const App: React.FC = () => {
         }
     };
 
-    const handleLogin = () => {
-        window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/github`;
-    };
-
     const handleLogout = async () => {
         try {
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/logout`, {}, {withCredentials: true});
@@ -194,10 +170,6 @@ const App: React.FC = () => {
         }
     };
 
-    const validateRepoUrl = (url: string) => {
-        const regex = /^(https?:\/\/)?(www\.)?github\.com\/[\w-]+\/[\w-]+(\/)?$/;
-        return regex.test(url);
-    };
 
     const handleAddCard = async () => {
         if (!newCard.openaiEndpoint || !newCard.apiModel || !newCard.apiKey || !newCard.repoUrl) {
@@ -307,7 +279,7 @@ const App: React.FC = () => {
             </Snackbar>
 
             {!user ? (
-                <Login onLogin={handleLogin}/>
+                <GithubLogin onLogin={handleGithubLogin}/>
             ) : (
                 <Box sx={{my: 4}}>
                     <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
@@ -322,7 +294,7 @@ const App: React.FC = () => {
                             {user ? (
                                 <Button variant="contained" onClick={handleLogout}>Logout</Button>
                             ) : (
-                                <Button variant="contained" onClick={handleLogin}>
+                                <Button variant="contained" onClick={handleGithubLogin}>
                                     Login with GitHub
                                 </Button>
                             )}
