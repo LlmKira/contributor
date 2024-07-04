@@ -133,6 +133,11 @@ const App: React.FC = () => {
 
     const handleAddCard = async () => {
         // Validate the card object using Zod
+        if (!newCard.openaiEndpoint || !newCard.apiModel || !newCard.apiKey || !newCard.repoUrl) {
+            setSnackbarMessage('All fields are required.');
+            setSnackbarOpen(true);
+            return; // Stop the function if any field is empty
+        }
         try {
             const validCard = cardSchema.parse(newCard);
 
@@ -218,7 +223,7 @@ const App: React.FC = () => {
                         {user && (
                             <Box sx={{display: 'flex', alignItems: 'center'}}>
                                 <Avatar
-                                    src={`https://avatars.githubusercontent.com/u/${user.uid}`}
+                                    src={user.avatarUrl}
                                     alt={user.name}
                                     sx={{mr: 2}}/>
                                 <Typography variant="h6">{user.name}</Typography>
