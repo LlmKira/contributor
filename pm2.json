@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "contributor-backend",
-      "script": "bun --harmony index.ts",
+      "script": "bun install && bun run start:backend",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,
@@ -13,7 +13,7 @@
     },
     {
       "name": "contributor-frontend",
-      "script": "bun run build:frontend",
+      "script": "bun install && bun run build:frontend",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,
@@ -35,7 +35,7 @@
     },
     {
       "name": "smee_proxy",
-      "script": "npm install && npm start",
+      "script": "bun install && bun run start:webhook",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,
