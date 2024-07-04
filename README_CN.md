@@ -115,9 +115,18 @@ pm2 start pm2.json
 - [GitHub Webhooks Validation](https://docs.github.com/zh/webhooks/using-webhooks/validating-webhook-deliveries)
 - [PyGithub Examples](https://github.com/PyGithub/PyGithub/blob/main/doc/examples/Issue.rst)
 
-## 许可证
+## License
 
-这个项目没有许可证。
+This project is licensed under the MIT License with Non-Commercial Clause - see the [LICENSE](./LICENSE) file for
+details.
+
+### Non-Commercial Use
+
+You are free to use this software for any non-commercial purposes.
+
+### Commercial Use
+
+For commercial use, please contact us to obtain a commercial license.
 
 ## 贡献
 

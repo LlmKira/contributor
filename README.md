@@ -6,6 +6,9 @@
 
 [中文README](README_CN.md)
 
+> [WARNING]
+> Our App is very unstable, so we maybe truncate user data. Please be careful when using it.
+
 ✨ Welcome to the Contributor GitHub App! ✨
 
 In a nutshell, to better manage projects, we need an enhanced Issue management tool. This is why I created this project.
@@ -85,18 +88,18 @@ from webhook.event_type import IssueComment
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
 async def handle_issue_comment(event: IssueComment.CREATED_EVENT):
-   logger.info("Received IssueComment.CREATED event")
-   repo_setting = get_repo_setting(
-      repo_name=event.repository.full_name,
-      repo=event.repository.get_repo(git_integration)
-   )
-   # repo_setting is the content of the .nerve.toml file
-   issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
-   comment = issue.create_comment(f"Hello World!")
-   issue.get_comment(comment.id).edit("Hello World! Edited")
-   print(f"Issue: {event.issue.title}")
-   print(f"Comment: {event.comment.body}")
-   print(f"Repo: {event.repository.full_name}")
+    logger.info("Received IssueComment.CREATED event")
+    repo_setting = get_repo_setting(
+        repo_name=event.repository.full_name,
+        repo=event.repository.get_repo(git_integration)
+    )
+    # repo_setting is the content of the .nerve.toml file
+    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+    comment = issue.create_comment(f"Hello World!")
+    issue.get_comment(comment.id).edit("Hello World! Edited")
+    print(f"Issue: {event.issue.title}")
+    print(f"Comment: {event.comment.body}")
+    print(f"Repo: {event.repository.full_name}")
 ```
 
 The same event can have multiple listeners, as long as each listener has a different `unique_id`.
@@ -125,7 +128,16 @@ Special thanks to these resources that made this project possible:
 
 ## License
 
-This project have no license.
+This project is licensed under the MIT License with Non-Commercial Clause - see the [LICENSE](./LICENSE) file for
+details.
+
+### Non-Commercial Use
+
+You are free to use this software for any non-commercial purposes.
+
+### Commercial Use
+
+For commercial use, please contact us to obtain a commercial license.
 
 ## Contributing
 

@@ -7,6 +7,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
+import {rateLimit} from 'express-rate-limit';
 
 dotenv.config();
 
@@ -32,19 +33,30 @@ mongoose.connect(MONGODB_URI, {
     }
 );
 
+function createUserId(provider: string, providerUserId: string): string {
+    return `${provider}:${providerUserId}`;
+}
+
+const createCardId = () => crypto.randomBytes(16).toString('hex');
+
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 100
+    // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
 }));
-
 app.use(bodyParser.json());
-
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {secure: false},
 }));
+
 
 app.get('/auth/github', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex');
@@ -233,6 +245,7 @@ app.delete('/cards/:id', async (req, res) => {
 });
 
 app.get('/internal/cards/:cardId', async (req, res) => {
+    // 不需要验证用户的 user 字段
     try {
         const {cardId} = req.params;
         const timeToken = req.query.timeToken as string;
