@@ -7,28 +7,22 @@ import {
     Card,
     CardContent,
     TextField,
-    IconButton,
     Grid,
-    Switch,
     Snackbar,
     Alert,
-    Avatar, Chip,
-    TableBody,
-    Table, TableRow, TableCell,
+    Avatar,
 } from '@mui/material';
 
-import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {v4 as uuidv4} from 'uuid';
-import axios from 'axios';
 // import {createTheme} from '@mui/material/styles';
-import {
-    ContentCopy as ContentCopyIcon,
-    Delete as DeleteIcon,
-    OpenInNew as OpenInNewIcon
-} from '@mui/icons-material';
 import {keyframes} from '@emotion/react';
-import GithubLogin, {handleGithubLogin} from "./login/Github.tsx";
-import {validateRepoUrl, obscureApiKey} from "./utils"
+import GithubLogin, {handleGithubLogin} from "./components/GithubLogin.tsx";
+import CardComponent from './components/CardComponent';
+import ApiService from './services/ApiService';
+import {cardSchema, type CardT, type UserT} from "@shared/schema.ts";
+import {z} from "zod";
+
+const apiService = new ApiService(import.meta.env.VITE_BACKEND_URL, localStorage);
 
 const fadeIn = keyframes`
     from {
@@ -41,30 +35,6 @@ const fadeIn = keyframes`
     }
 `;
 
-const slideIn = keyframes`
-    from {
-        transform: translateX(-10px);
-    }
-    to {
-        transform: translateX(0);
-    }
-`;
-
-const highlightColor = keyframes`
-    0% {
-        background-color: transparent;
-    }
-    100% {
-        background-color: rgba(0, 0, 0, 0.1);
-    }
-`;
-
-interface User {
-    uid: string;
-    name: string;
-    login: string;
-    accessToken: string;
-}
 
 interface editState {
     cardId: string;
@@ -72,17 +42,18 @@ interface editState {
 }
 
 const App: React.FC = () => {
-    const [user, setUser] = useState<User | null>(null);
-    const [cards, setCards] = useState<any[]>([]);
-    const [newCard, setNewCard] = useState({
+    const [user, setUser] = useState<UserT | null>(null);
+    const [cards, setCards] = useState<CardT[]>([]);
+    // Initialize state with validated default values
+    const [newCard, setNewCard] = useState<CardT>(() => cardSchema.parse({
         cardId: uuidv4(),
-        userId: '',
         openaiEndpoint: 'https://api.openai.com/v1/',
         apiModel: '',
         apiKey: '',
         repoUrl: '',
-        disabled: false
-    });
+        userId: '',
+        disabled: false,
+    }));
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -103,10 +74,14 @@ const App: React.FC = () => {
     const handleSave = async (cardId: any) => {
         const card = cards.find(c => c.cardId === cardId);
         try {
-            await axios.put(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, card, {
-                withCredentials: true,
-                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-            });
+            if (!card) {
+                console.error('No card found.');
+                return;
+            }
+            await apiService.updateUserCard(
+                cardId,
+                card
+            );
             setEditMode({cardId: "", field: ""});
             setSnackbarMessage('Card updated successfully.');
             setSnackbarOpen(true);
@@ -117,10 +92,10 @@ const App: React.FC = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user`, {withCredentials: true});
-                setUser(response.data);
-                await fetchUserCards(response.data.uid);
-                localStorage.setItem('githubToken', response.data.accessToken);
+                const fetchedUser = await apiService.fetchUser();
+                setUser(fetchedUser);
+                const userCards = await apiService.fetchUserCards(fetchedUser.uid);
+                setCards(userCards);
             } catch (err) {
                 console.error('Error fetching user:', err);
             }
@@ -144,28 +119,12 @@ const App: React.FC = () => {
             }
         };
     }, [confirmDelete]);
-    const fetchUserCards = async (userId: string) => {
-        try {
-            if (!localStorage.getItem('githubToken')) {
-                console.log('No GitHub token found');
-                return;
-            }
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/cards`, {
-                params: {userId},
-                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-            });
-            setCards(response.data);
-        } catch (err) {
-            console.error('Error fetching cards:', err);
-        }
-    };
 
     const handleLogout = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/logout`, {}, {withCredentials: true});
+            await apiService.logout();
             setUser(null);
             setCards([]);
-            localStorage.removeItem('githubToken');
         } catch (err) {
             console.error('Error during logout:', err);
         }
@@ -173,48 +132,20 @@ const App: React.FC = () => {
 
 
     const handleAddCard = async () => {
-        if (!newCard.openaiEndpoint || !newCard.apiModel || !newCard.apiKey || !newCard.repoUrl) {
-            setSnackbarMessage('All fields are required to add a new card.');
-            setSnackbarOpen(true);
-            return;
-        }
-        if (!validateRepoUrl(newCard.repoUrl)) {
-            setSnackbarMessage('Invalid repository URL.');
-            setSnackbarOpen(true);
-            return;
-        }
-        // Validate openaiEndpoint is a URL
-        const urlRegex = /^(https?:\/\/)?([^\s$.?#].[^\s]*)$/i;
-        if (!urlRegex.test(newCard.openaiEndpoint)) {
-            setSnackbarMessage('Invalid OpenAI Endpoint. It should be a URL.');
-            setSnackbarOpen(true);
-            return;
-        }
-        // Validate apiKey is not more than 100 characters
-        if (newCard.apiKey.length > 100) {
-            setSnackbarMessage('API Key should not exceed 100 characters.');
-            setSnackbarOpen(true);
-            return;
-        }
+        // Validate the card object using Zod
         try {
-            if (!localStorage.getItem('githubToken')) {
-                console.log('No GitHub token found');
+            const validCard = cardSchema.parse(newCard);
+
+            if (!user?.uid) {
+                console.error('No user found.');
                 return;
             }
-            if (!user) {
-                console.log('No user found');
-                return;
-            }
-            const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/cards`,
-                {...newCard, userId: user.uid},
-                {
-                    withCredentials: true,
-                    headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-                }
-            );
-            setCards([...cards, response.data]);
-            setNewCard({
+
+            const createdCard = await apiService.createUserCard(validCard, user.uid);
+            setCards([...cards, createdCard]);
+
+            // Reset new card state
+            setNewCard(cardSchema.parse({
                 cardId: uuidv4(),
                 openaiEndpoint: 'https://api.openai.com/v1/',
                 apiModel: '',
@@ -222,24 +153,23 @@ const App: React.FC = () => {
                 repoUrl: '',
                 userId: user.uid,
                 disabled: false,
-            });
+            }));
+
             setSnackbarMessage('Card added successfully.');
             setSnackbarOpen(true);
-        } catch (err) {
-            console.error('Error adding card:', err);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                setSnackbarMessage('Validation Error: ' + error.errors.map(e => e.message).join(', '));
+            } else {
+                console.error('Error adding card:', error);
+            }
+            setSnackbarOpen(true);
         }
     };
     const handleDeleteCard = async (cardId: string) => {
         try {
             if (confirmDelete === cardId) {
-                if (!localStorage.getItem('githubToken')) {
-                    console.log('No GitHub token found');
-                    return;
-                }
-                await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, {
-                    withCredentials: true,
-                    headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-                });
+                await apiService.deleteUserCard(cardId);
                 setCards(cards.filter(card => card.cardId !== cardId));
                 setSnackbarMessage('Card deleted successfully.');
                 setSnackbarOpen(true);
@@ -255,11 +185,12 @@ const App: React.FC = () => {
     const handleToggleCard = async (cardId: string) => {
         try {
             const card = cards.find(c => c.cardId === cardId);
+            if (!card) {
+                console.error('No card found.');
+                return;
+            }
             const updatedCard = {...card, disabled: !card.disabled};
-            await axios.put(`${import.meta.env.VITE_BACKEND_URL}/cards/${cardId}`, updatedCard, {
-                withCredentials: true,
-                headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
-            });
+            await apiService.updateUserCard(cardId, updatedCard);
             setCards(cards.map(c => c.cardId === cardId ? updatedCard : c));
             setSnackbarMessage('Card updated successfully.');
             setSnackbarOpen(true);
@@ -367,206 +298,20 @@ const App: React.FC = () => {
                                     </Button>
                                 </CardContent>
                             </Card>
-
                             <Box>
                                 {cards.map((card, index) => (
-                                    <Card key={card.cardId} variant="outlined" sx={{
-                                        mb: 2,
-                                        boxShadow: card.disabled ? 1 : 3,
-                                        transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
-                                        opacity: card.disabled ? 0.5 : 1,
-                                        animation: `${fadeIn} 0.5s`,
-                                        '&:hover': {
-                                            transform: 'scale(1.005)'
-                                        }
-                                    }}>
-                                        <CardContent sx={{position: 'relative'}}>
-                                            <Typography variant="h6" sx={{
-                                                mb: 2,
-                                                transition: 'color 0.3s',
-                                                color: card.disabled ? 'text.disabled' : 'text.primary',
-                                                animation: `${slideIn} 0.5s`
-                                            }}>
-                                                {card.repoUrl.replace(/\/$/, '').split('/').slice(-1)}
-                                            </Typography>
-
-                                            <Box sx={{
-                                                border: '1px dashed',
-                                                borderRadius: '5px',
-                                                p: 1,
-                                                mb: 2,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                animation: `${highlightColor} 0.5s`
-                                            }}>
-                                                <Typography variant="body1"
-                                                            sx={{flex: 1}}>UUID: {card.cardId}</Typography>
-                                                <CopyToClipboard text={card.cardId}>
-                                                    <IconButton>
-                                                        <ContentCopyIcon/>
-                                                    </IconButton>
-                                                </CopyToClipboard>
-                                            </Box>
-
-                                            <Table sx={{animation: `${fadeIn} 0.5s`}}>
-                                                <TableBody>
-                                                    <TableRow>
-                                                        <TableCell><strong>OpenAI Endpoint</strong></TableCell>
-                                                        <TableCell>
-                                                            {editMode.cardId === card.cardId && editMode.field === 'openaiEndpoint' ? (
-                                                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        value={card.openaiEndpoint}
-                                                                        onChange={(e) => handleChange(card.cardId, 'openaiEndpoint', e.target.value)}
-                                                                    />
-                                                                    <Button
-                                                                        onClick={() => handleSave(card.cardId)}>Save</Button>
-                                                                </Box>
-                                                            ) : (
-                                                                <Chip
-                                                                    label={card.openaiEndpoint}
-                                                                    sx={{
-                                                                        transition: 'background-color 0.3s',
-                                                                        animation: `${fadeIn} 0.5s`,
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'lightblue',
-                                                                            cursor: 'pointer'
-                                                                        },
-                                                                    }}
-                                                                    onDoubleClick={() => handleDoubleClick(card.cardId, 'openaiEndpoint')}
-                                                                />
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    <TableRow>
-                                                        <TableCell><strong>Model</strong></TableCell>
-                                                        <TableCell>
-                                                            {editMode.cardId === card.cardId && editMode.field === 'apiModel' ? (
-                                                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        value={card.apiModel}
-                                                                        onChange={(e) => handleChange(card.cardId, 'apiModel', e.target.value)}
-                                                                    />
-                                                                    <Button
-                                                                        onClick={() => handleSave(card.cardId)}>Save</Button>
-                                                                </Box>
-                                                            ) : (
-                                                                <Chip
-                                                                    label={card.apiModel}
-                                                                    sx={{
-                                                                        transition: 'background-color 0.3s',
-                                                                        animation: `${fadeIn} 0.5s`,
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'lightblue',
-                                                                            cursor: 'pointer'
-                                                                        }
-                                                                    }}
-                                                                    onDoubleClick={() => handleDoubleClick(card.cardId, 'apiModel')}
-                                                                />
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    <TableRow>
-                                                        <TableCell><strong>API Key</strong></TableCell>
-                                                        <TableCell>
-                                                            {editMode.cardId === card.cardId && editMode.field === 'apiKey' ? (
-                                                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        value={card.apiKey}
-                                                                        onChange={(e) => handleChange(card.cardId, 'apiKey', e.target.value)}
-                                                                    />
-                                                                    <Button
-                                                                        onClick={() => handleSave(card.cardId)}>Save</Button>
-                                                                </Box>
-                                                            ) : (
-                                                                <Chip
-                                                                    label={obscureApiKey(card.apiKey)}
-                                                                    sx={{
-                                                                        transition: 'background-color 0.3s',
-                                                                        animation: `${fadeIn} 0.5s`,
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'lightblue',
-                                                                            cursor: 'pointer'
-                                                                        }
-                                                                    }}
-                                                                    onDoubleClick={() => handleDoubleClick(card.cardId, 'apiKey')}
-                                                                />
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                    <TableRow>
-                                                        <TableCell><strong>Repository URL</strong></TableCell>
-                                                        <TableCell>
-                                                            {editMode.cardId === card.cardId && editMode.field === 'repoUrl' ? (
-                                                                <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        value={card.repoUrl}
-                                                                        onChange={(e) => handleChange(card.cardId, 'repoUrl', e.target.value)}
-                                                                    />
-                                                                    <Button
-                                                                        onClick={() => handleSave(card.cardId)}>Save</Button>
-                                                                </Box>
-                                                            ) : (
-                                                                <Chip
-                                                                    label={card.repoUrl}
-                                                                    sx={{
-                                                                        transition: 'background-color 0.3s',
-                                                                        animation: `${fadeIn} 0.5s`,
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'lightblue',
-                                                                            cursor: 'pointer'
-                                                                        }
-                                                                    }}
-                                                                    onDoubleClick={() => handleDoubleClick(card.cardId, 'repoUrl')}
-                                                                />
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                </TableBody>
-                                            </Table>
-
-                                            <Box sx={{
-                                                mt: 2,
-                                                display: 'flex',
-                                                justifyContent: 'flex-end',
-                                                alignItems: 'center'
-                                            }}>
-                                                <IconButton
-                                                    edge="end"
-                                                    aria-label="delete"
-                                                    onClick={() => handleDeleteCard(card.cardId)}
-                                                    sx={{
-                                                        color: confirmDelete === card.cardId ? 'indianred' : 'grey',
-                                                        transition: 'color 0.3s',
-                                                    }}
-                                                >
-                                                    <DeleteIcon/>
-                                                </IconButton>
-                                                <Switch
-                                                    checked={!card.disabled}
-                                                    onChange={() => handleToggleCard(card.cardId)}
-                                                    sx={{mr: 1}}
-                                                />
-                                                <IconButton
-                                                    edge="start"
-                                                    aria-label="open-repo"
-                                                    onClick={() => window.open(card.repoUrl, '_blank')}
-                                                >
-                                                    <OpenInNewIcon/>
-                                                </IconButton>
-                                            </Box>
-
-                                            {index === 0 && (
-                                                <Typography variant="caption" sx={{mt: 1, color: 'text.secondary'}}>
-                                                    Double click on a tag to edit its properties!
-                                                </Typography>
-                                            )}
-                                        </CardContent>
-                                    </Card>
+                                    <CardComponent
+                                        key={card.cardId}
+                                        card={card}
+                                        editMode={editMode}
+                                        confirmDelete={confirmDelete}
+                                        handleChange={handleChange}
+                                        showCaption={index === 0}
+                                        handleSave={handleSave}
+                                        handleDoubleClick={handleDoubleClick}
+                                        handleDeleteCard={handleDeleteCard}
+                                        handleToggleCard={handleToggleCard}
+                                    />
                                 ))}
                             </Box>
                         </>
