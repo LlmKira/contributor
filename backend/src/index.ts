@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
 // import {rateLimit} from 'express-rate-limit';
 import path from 'path';
-import {userSchema, Platform, cardSchema} from "@shared/schema.ts";
+import {cardSchema, Platform, userSchema} from "@shared/schema.ts";
 import {z} from "zod";
 
 dotenv.config({path: path.resolve(__dirname, '../.env')});  // 确保正确读取.env文件
@@ -36,18 +36,22 @@ mongoose.connect(MONGODB_URI, {
     }
 );
 
-function createUserId(provider: string, providerUserId: string): string {
+const createUserId = (provider: string, providerUserId: string): string => {
     return `${provider}:${providerUserId}`;
 }
 
-function getAvatarUrl(provider: string, providerUserId: string): string {
+const getAvatarUrl = (provider: string, providerUserId: string): string => {
     if (provider === Platform.GitHub) {
         return `https://avatars.githubusercontent.com/u/${providerUserId}`;
     } else {
         return '';
     }
+
 }
 
+const createCardId = (): string => {
+    return crypto.randomBytes(16).toString('hex');
+}
 
 app.use(cors({
     origin: CORS_ORIGIN,
