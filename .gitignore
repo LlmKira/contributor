@@ -140,3 +140,4 @@ frontend/.env
 **/**/.env.development.local
 /core/http_cache.sqlite
 /http_cache.sqlite
+/.deploy.env
