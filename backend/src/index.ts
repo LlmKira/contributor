@@ -7,7 +7,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
-import {rateLimit} from 'express-rate-limit';
+// import {rateLimit} from 'express-rate-limit';
 import {Provider} from "./types.ts";
 import path from 'path';
 
@@ -46,6 +46,7 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
+/*
 app.use(rateLimit(
     {
         windowMs: 60 * 1000, // 1 minute
@@ -63,6 +64,9 @@ app.use(rateLimit(
         }
     }
 ));
+
+*/
+
 
 app.use(session({
     secret: SESSION_SECRET,
