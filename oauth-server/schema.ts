@@ -10,6 +10,7 @@ type CardDocument = Document & {
     repoUrl: string;
     disabled: boolean;
 }
+
 const CardSchema: Schema = new Schema({
     cardId: {type: String, default: uuidv4, unique: true},
     openaiEndpoint: {type: String, required: true},
@@ -22,14 +23,14 @@ const CardSchema: Schema = new Schema({
 export const Card = mongoose.model<CardDocument>('Card', CardSchema);
 
 interface IUser extends Document {
-    githubId: string;
+    uid: string;
     name: string;
     login: string;
     accessToken: string;
 }
 
 const UserSchema: Schema = new Schema({
-    githubId: {type: String, required: true, unique: true},
+    uid: {type: String, required: true, unique: true},
     name: {type: String, required: true},
     login: {type: String, required: true},
     accessToken: {type: String, required: true},

@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
 import {rateLimit} from 'express-rate-limit';
+import {Provider} from "./types.ts";
 
 dotenv.config();
 
@@ -37,8 +38,6 @@ function createUserId(provider: string, providerUserId: string): string {
     return `${provider}:${providerUserId}`;
 }
 
-const createCardId = () => crypto.randomBytes(16).toString('hex');
-
 const limiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
     limit: 100
@@ -56,7 +55,27 @@ app.use(session({
     saveUninitialized: true,
     cookie: {secure: false},
 }));
-
+app.use(async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const user = await User.findOne({accessToken: token}).exec();
+            if (user) {
+                // @ts-ignore
+                req.user = user;
+                next();
+            } else {
+                res.status(401).send('Invalid token');
+            }
+        } catch (err) {
+            console.error('Failed to authenticate:', err);
+            res.status(500).send('Failed to authenticate');
+        }
+    } else {
+        next();
+    }
+});
 
 app.get('/auth/github', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex');
@@ -81,17 +100,18 @@ app.get('/auth/github/callback', async (req, res) => {
             const accessToken = tokenResponse.data.access_token;
             const userResponse = await axios.get('https://api.github.com/user', {headers: {Authorization: `Bearer ${accessToken}`}});
             const {id, name, login} = userResponse.data;
+            const userId = createUserId(Provider.GITHUB, id);
 
-            let user = await User.findOne({githubId: id});
+            let user = await User.findOne({uid: userId}).exec();
             if (!user) {
-                user = new User({githubId: id, name, login, accessToken});
+                user = new User({uid: userId, name, login, accessToken});
                 await user.save();
             } else {
                 user.accessToken = accessToken;
                 await user.save();
             }
             req.session.accessToken = accessToken;
-            req.session.userId = user.githubId;
+            req.session.userId = user.uid;
             res.redirect(CORS_ORIGIN);
         } catch (err) {
             console.error('Error during GitHub OAuth callback:', err);
@@ -106,9 +126,9 @@ app.get('/auth/github/callback', async (req, res) => {
 app.get('/user', async (req, res) => {
     if (req.session.accessToken) {
         try {
-            const user = await User.findOne({githubId: req.session.userId}).exec();
+            const user = await User.findOne({uid: req.session.userId}).exec();
             res.json({
-                githubId: user?.githubId,
+                uid: user?.uid,
                 name: user?.name,
                 login: user?.login,
                 accessToken: user?.accessToken,
@@ -131,28 +151,6 @@ app.post('/logout', (req, res) => {
             res.send('Logged out');
         }
     });
-});
-
-app.use(async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const user = await User.findOne({accessToken: token}).exec();
-            if (user) {
-                // @ts-ignore
-                req.user = user;
-                next();
-            } else {
-                res.status(401).send('Invalid token');
-            }
-        } catch (err) {
-            console.error('Failed to authenticate:', err);
-            res.status(500).send('Failed to authenticate');
-        }
-    } else {
-        next();
-    }
 });
 
 app.get('/cards', async (req, res) => {
@@ -182,7 +180,7 @@ app.post('/cards', async (req, res) => {
         }
         const card = new Card({
             cardId: req.body.cardId,
-            userId: req.user?.githubId,
+            userId: req.user?.uid,
             openaiEndpoint: req.body.openaiEndpoint,
             apiKey: req.body.apiKey,
             apiModel: req.body.apiModel,
@@ -210,7 +208,7 @@ app.put('/cards/:id', async (req, res) => {
             res.status(400).send('Input too long');
             return;
         }
-        const card = await Card.findOneAndUpdate({cardId: id, userId: req.user?.githubId}, req.body, {new: true});
+        const card = await Card.findOneAndUpdate({cardId: id, userId: req.user?.uid}, req.body, {new: true});
         if (!card) {
             res.status(404).send('Card not found');
         } else {
@@ -232,7 +230,7 @@ app.put('/cards/:id', async (req, res) => {
 app.delete('/cards/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        const result = await Card.deleteOne({cardId: id, userId: req.user?.githubId});
+        const result = await Card.deleteOne({cardId: id, userId: req.user?.uid});
         if (result.deletedCount === 0) {
             res.status(404).send('Card not found');
         } else {
