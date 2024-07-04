@@ -1,4 +1,4 @@
-![Contributor](.github/banner.png)
+![Contributor](.github/contributor_banner.png)
 
 -----------------
 
