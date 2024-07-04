@@ -12,17 +12,6 @@
       "log_date_format": "YYYY-MM-DD HH-mm-ss"
     },
     {
-      "name": "contributor-frontend",
-      "script": "sleep 10 && bun install && bun run build:frontend",
-      "instances": 1,
-      "max_restarts": 1,
-      "restart_delay": 10000,
-      "exp_backoff_restart_delay": 1000,
-      "error_file": "error.log",
-      "out_file": "/dev/null",
-      "log_date_format": "YYYY-MM-DD HH-mm-ss"
-    },
-    {
       "name": "contributor-app",
       "script": "pdm install&&pdm run python main.py",
       "instances": 1,
