@@ -1,7 +1,6 @@
 {
-  "name": "oauth-server",
-  "module": "index.ts",
-  "type": "module",
+  "name": "backend",
+  "private": true,
   "devDependencies": {
     "@types/bun": "latest",
     "@types/uuid": "^10.0.0"
@@ -24,11 +23,5 @@
     "mongoose": "^8.4.3",
     "pino-http": "^10.1.0",
     "uuid": "^10.0.0"
-  },
-  "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun run index.ts",
-    "build": "bun build ./index.ts --target=bun --outfile=server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

@@ -132,3 +132,6 @@ dist
 /.secret/
 /.idea/
 /playground/note.md
+# Ignore environment variable files
+backend/.env
+frontend/.env

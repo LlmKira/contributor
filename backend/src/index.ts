@@ -9,8 +9,9 @@ import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
 import {rateLimit} from 'express-rate-limit';
 import {Provider} from "./types.ts";
+import path from 'path';
 
-dotenv.config();
+dotenv.config({path: path.resolve(__dirname, '../.env')});  // 确保正确读取.env文件
 
 const app = express();
 const PORT = process.env.PORT || 5000;

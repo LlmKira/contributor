@@ -1,8 +1,19 @@
 {
   "name": "contributor",
-  "module": "webhook_proxy.cjs",
-  "type": "module",
+  "private": true,
+  "scripts": {
+    "start:webhook": "node webhook_proxy.cjs",
+    "start:backend": "bun run backend/src/index.ts",
+    "start:frontend": "vite --config frontend/vite.config.ts",
+    "build:frontend": "tsc -p frontend && vite build --config frontend/vite.config.ts"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -11,9 +22,8 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "node": "^20.15.0",
-    "smee-client": "^2.0.1"
-  },
-  "scripts": {
-    "start": "node webhook_proxy.cjs"
+    "smee-client": "^2.0.1",
+    "zod": "^3.23.0",
+    "uuid": "^10.0.0"
   }
 }

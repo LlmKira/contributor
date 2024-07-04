@@ -1,5 +1,5 @@
 // express.d.ts
-import {User} from './types';  // 假设你有一个 User 类型对象
+import {User} from './types.ts';  // 假设你有一个 User 类型对象
 
 declare global {
     namespace Express {

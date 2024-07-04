@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import {keyframes} from '@emotion/react';
 import GithubLogin, {handleGithubLogin} from "./login/Github.tsx";
+import {validateRepoUrl, obscureApiKey} from "./utils"
 
 const fadeIn = keyframes`
     from {
@@ -482,7 +483,7 @@ const App: React.FC = () => {
                                                                 </Box>
                                                             ) : (
                                                                 <Chip
-                                                                    label={card.apiKey}
+                                                                    label={obscureApiKey(card.apiKey)}
                                                                     sx={{
                                                                         transition: 'background-color 0.3s',
                                                                         animation: `${fadeIn} 0.5s`,
