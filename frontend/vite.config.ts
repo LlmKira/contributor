@@ -14,7 +14,6 @@ export default defineConfig({
     root: path.resolve(__dirname),  // 设置根目录
     publicDir: path.resolve(__dirname, 'public'),  // 公共目录用于静态资源
     build: {
-        minify: 'terser',
         rollupOptions: {
             input: path.resolve(__dirname, 'index.html')  // 指定入口文件
         }
