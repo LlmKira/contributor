@@ -59,9 +59,9 @@ const highlightColor = keyframes`
 `;
 
 interface User {
+    uid: string;
     name: string;
     login: string;
-    githubId: string;
     accessToken: string;
 }
 
@@ -138,7 +138,7 @@ const App: React.FC = () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user`, {withCredentials: true});
                 setUser(response.data);
-                await fetchUserCards(response.data.githubId);
+                await fetchUserCards(response.data.uid);
                 localStorage.setItem('githubToken', response.data.accessToken);
             } catch (err) {
                 console.error('Error fetching user:', err);
@@ -234,7 +234,7 @@ const App: React.FC = () => {
             }
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/cards`,
-                {...newCard, userId: user.githubId},
+                {...newCard, userId: user.uid},
                 {
                     withCredentials: true,
                     headers: {Authorization: `Bearer ${localStorage.getItem('githubToken')}`}
@@ -247,7 +247,7 @@ const App: React.FC = () => {
                 apiModel: '',
                 apiKey: '',
                 repoUrl: '',
-                userId: user.githubId,
+                userId: user.uid,
                 disabled: false,
             });
             setSnackbarMessage('Card added successfully.');
@@ -313,7 +313,7 @@ const App: React.FC = () => {
                     <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
                         {user && (
                             <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                <Avatar src={`https://avatars.githubusercontent.com/u/${user.githubId}`} alt={user.name}
+                                <Avatar src={`https://avatars.githubusercontent.com/u/${user.uid}`} alt={user.name}
                                         sx={{mr: 2}}/>
                                 <Typography variant="h6">{user.name}</Typography>
                             </Box>
