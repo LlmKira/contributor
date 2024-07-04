@@ -44,9 +44,19 @@ const limiter = rateLimit(
         windowMs: 60 * 1000, // 1 minute
         limit: 100,
         // limit each IP to 100 requests per windowMs
-        validate: {xForwardedForHeader: false}
+        keyGenerator: (req): string => {
+            // Check for the CF-Connecting-IP header first to use the original
+            // client IP address when the request comes through Cloudflare
+            const ip = req.headers['cf-connecting-ip'] || req.ip;
+            if (Array.isArray(ip)) {
+                return ip[0];
+            }
+            // @ts-ignore
+            return ip;
+        }
     }
 );
+
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
