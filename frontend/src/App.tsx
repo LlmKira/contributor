@@ -132,12 +132,22 @@ const App: React.FC = () => {
 
 
     const handleAddCard = async () => {
+        const githubRepoUrlRegex = /^https:\/\/github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/;
+
         // Validate the card object using Zod
         if (!newCard.openaiEndpoint || !newCard.apiModel || !newCard.apiKey || !newCard.repoUrl) {
             setSnackbarMessage('All fields are required.');
             setSnackbarOpen(true);
             return; // Stop the function if any field is empty
         }
+
+        // Validate the GitHub repository URL
+        if (!githubRepoUrlRegex.test(newCard.repoUrl)) {
+            setSnackbarMessage('Invalid GitHub repository URL. Please enter a valid URL.');
+            setSnackbarOpen(true);
+            return; // Stop the function if the URL is invalid
+        }
+
         try {
             const validCard = cardSchema.parse(newCard);
 

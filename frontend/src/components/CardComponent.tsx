@@ -257,7 +257,7 @@ const CardComponent: React.FC<CardComponentProps> = (
                         aria-label="delete"
                         onClick={() => handleDeleteCard(card.cardId)}
                         sx={{
-                            color: confirmDelete === card.cardId ? 'grey' : 'indianred',
+                            color: confirmDelete === card.cardId ? 'indianred' : 'grey',
                             transition: 'color 0.3s',
                         }}
                     >
