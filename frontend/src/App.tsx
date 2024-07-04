@@ -1,16 +1,16 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-    Container,
+    Alert,
+    Avatar,
     Box,
-    Typography,
     Button,
     Card,
     CardContent,
-    TextField,
+    Container,
     Grid,
     Snackbar,
-    Alert,
-    Avatar,
+    TextField,
+    Typography,
 } from '@mui/material';
 
 import {v4 as uuidv4} from 'uuid';
@@ -226,7 +226,10 @@ const App: React.FC = () => {
             </Snackbar>
 
             {!user ? (
-                <GithubLogin onLogin={handleGithubLogin}/>
+                <GithubLogin
+                    onLogin={handleGithubLogin}
+                    storage={localStorage}
+                />
             ) : (
                 <Box sx={{my: 4}}>
                     <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
