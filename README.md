@@ -7,7 +7,7 @@
 [中文README](README_CN.md)
 
 > [!WARNING]
-> Our App is very unstable, so we maybe clear user data. Please be careful when using it.
+> Our App is still in the testing phase, so we maybe clear user data. Please be careful when using it.
 
 ✨ Welcome to the Contributor GitHub App! ✨
 
