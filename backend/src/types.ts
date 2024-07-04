@@ -1,10 +1,4 @@
 // types.ts
-interface User {
-    uid: string;
-    name: string;
-    login: string;
-    accessToken: string;
-}
 
 enum Provider {
     GITHUB = 'github',
@@ -12,4 +6,3 @@ enum Provider {
 }
 
 export {Provider};
-export type {User};

@@ -42,23 +42,27 @@ function createUserId(provider: string, providerUserId: string): string {
 const limiter = rateLimit(
     {
         windowMs: 60 * 1000, // 1 minute
-        limit: 100
+        limit: 100,
         // limit each IP to 100 requests per windowMs
+        validate: {xForwardedForHeader: false}
     }
 );
-
-app.use(limiter);
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
 }));
+
 app.use(bodyParser.json());
+
+app.use(limiter);
+
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {secure: false},
 }));
+
 app.use(async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader) {
