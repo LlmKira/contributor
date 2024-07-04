@@ -39,7 +39,14 @@ function createUserId(provider: string, providerUserId: string): string {
     return `${provider}:${providerUserId}`;
 }
 
-const limiter = rateLimit(
+app.use(cors({
+    origin: CORS_ORIGIN,
+    credentials: true,
+}));
+
+app.use(bodyParser.json());
+
+app.use(rateLimit(
     {
         windowMs: 60 * 1000, // 1 minute
         limit: 100,
@@ -55,16 +62,7 @@ const limiter = rateLimit(
             return ip;
         }
     }
-);
-
-app.use(cors({
-    origin: CORS_ORIGIN,
-    credentials: true,
-}));
-
-app.use(bodyParser.json());
-
-app.use(limiter);
+));
 
 app.use(session({
     secret: SESSION_SECRET,
