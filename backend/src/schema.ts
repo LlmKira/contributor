@@ -24,5 +24,7 @@ const UserSchema: Schema = new Schema({
     name: {type: String, required: true},
     login: {type: String, required: true},
     accessToken: {type: String, required: true},
+    avatarUrl: {type: String},
+    sourcePlatform: {type: String},
 });
 export const User = mongoose.model<IUser>("User", UserSchema);

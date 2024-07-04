@@ -8,8 +8,9 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import {Card, User} from "./schema.ts";
 // import {rateLimit} from 'express-rate-limit';
-import {Provider} from "./types.ts";
 import path from 'path';
+import {userSchema, Platform, cardSchema} from "@shared/schema.ts";
+import {z} from "zod";
 
 dotenv.config({path: path.resolve(__dirname, '../.env')});  // 确保正确读取.env文件
 
@@ -38,6 +39,15 @@ mongoose.connect(MONGODB_URI, {
 function createUserId(provider: string, providerUserId: string): string {
     return `${provider}:${providerUserId}`;
 }
+
+function getAvatarUrl(provider: string, providerUserId: string): string {
+    if (provider === Platform.GitHub) {
+        return `https://avatars.githubusercontent.com/u/${providerUserId}`;
+    } else {
+        return '';
+    }
+}
+
 
 app.use(cors({
     origin: CORS_ORIGIN,
@@ -120,14 +130,23 @@ app.get('/auth/github/callback', async (req, res) => {
             const accessToken = tokenResponse.data.access_token;
             const userResponse = await axios.get('https://api.github.com/user', {headers: {Authorization: `Bearer ${accessToken}`}});
             const {id, name, login} = userResponse.data;
-            const userId = createUserId(Provider.GITHUB, id);
-
+            const userId = createUserId(Platform.GitHub, id);
             let user = await User.findOne({uid: userId}).exec();
             if (!user) {
-                user = new User({uid: userId, name, login, accessToken});
+                user = new User(
+                    {
+                        uid: userId,
+                        name: name,
+                        login: login,
+                        accessToken: accessToken,
+                        avatarUrl: getAvatarUrl(Platform.GitHub, id),
+                        sourcePlatform: Platform.GitHub,
+                    }
+                );
                 await user.save();
             } else {
                 user.accessToken = accessToken;
+                user.avatarUrl = getAvatarUrl(Platform.GitHub, id);
                 await user.save();
             }
             req.session.accessToken = accessToken;
@@ -147,12 +166,9 @@ app.get('/user', async (req, res) => {
     if (req.session.accessToken) {
         try {
             const user = await User.findOne({uid: req.session.userId}).exec();
-            res.json({
-                uid: user?.uid,
-                name: user?.name,
-                login: user?.login,
-                accessToken: user?.accessToken,
-            });
+            res.json(
+                userSchema.parse(user)
+            );
         } catch (err) {
             console.error('Failed to fetch user:', err);
             res.status(500).send('Failed to fetch user');
@@ -177,7 +193,9 @@ app.get('/cards', async (req, res) => {
     try {
         const {userId} = req.query;
         const cards = await Card.find({userId}).exec();
-        res.json(cards);
+        res.json(
+            z.array(cardSchema).parse(cards)
+        )
     } catch (err) {
         console.error('Failed to fetch cards:', err);
         res.status(500).send('Failed to fetch cards');
@@ -207,14 +225,9 @@ app.post('/cards', async (req, res) => {
             repoUrl: req.body.repoUrl,
         })
         await card.save();
-        res.json({
-            cardId: card.cardId,
-            openaiEndpoint: card.openaiEndpoint,
-            apiKey: card.apiKey,
-            apiModel: card.apiModel,
-            repoUrl: card.repoUrl,
-            disabled: card.disabled,
-        });
+        res.json(
+            cardSchema.parse(card)
+        );
     } catch (err) {
         console.error('Failed to add card:', err);
         res.status(500).send('Failed to add card');
@@ -232,14 +245,9 @@ app.put('/cards/:id', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json({
-                cardId: card.cardId,
-                openaiEndpoint: card.openaiEndpoint,
-                apiKey: card.apiKey,
-                apiModel: card.apiModel,
-                repoUrl: card.repoUrl,
-                disabled: card.disabled,
-            })
+            res.json(
+                cardSchema.parse(card)
+            )
         }
     } catch (err) {
         console.error('Failed to update card:', err);
@@ -285,14 +293,9 @@ app.get('/internal/cards/:cardId', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json({
-                cardId: card.cardId,
-                openaiEndpoint: card.openaiEndpoint,
-                apiKey: card.apiKey,
-                apiModel: card.apiModel,
-                repoUrl: card.repoUrl,
-                disabled: card.disabled,
-            });
+            res.json(
+                cardSchema.parse(card)
+            );
         }
     } catch (err) {
         console.error('Failed to fetch user info:', err);

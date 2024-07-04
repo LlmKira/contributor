@@ -217,8 +217,10 @@ const App: React.FC = () => {
                     <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
                         {user && (
                             <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                <Avatar src={`https://avatars.githubusercontent.com/u/${user.uid}`} alt={user.name}
-                                        sx={{mr: 2}}/>
+                                <Avatar
+                                    src={`https://avatars.githubusercontent.com/u/${user.uid}`}
+                                    alt={user.name}
+                                    sx={{mr: 2}}/>
                                 <Typography variant="h6">{user.name}</Typography>
                             </Box>
                         )}

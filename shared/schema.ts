@@ -1,5 +1,11 @@
 import {z} from "zod";
 import {v4 as uuidv4} from "uuid";
+
+// 定义来源平台枚举
+export enum Platform {
+    GitHub = "github",
+}
+
 // 定义 Zod Schema
 export const cardSchema = z.object({
     cardId: z.string().uuid().default(uuidv4),
@@ -19,6 +25,8 @@ export const userSchema = z.object({
     name: z.string(),
     login: z.string(),
     accessToken: z.string(),
+    avatarUrl: z.string().optional(),
+    sourcePlatform: z.nativeEnum(Platform).optional(),
 });
 
 export type UserT = z.infer<typeof userSchema>;
