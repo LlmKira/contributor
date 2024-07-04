@@ -12,12 +12,12 @@ from github import GithubIntegration
 from loguru import logger
 from pydantic import BaseModel, Field, SecretStr
 
-from app.openai import OpenAI, OpenAICredential, OpenAIResult
-from app.openai.cell import UserMessage, SystemMessage
-from app.utils import get_repo_setting, Card, RepoSetting
+from core.openai import OpenAI, OpenAICredential, OpenAIResult
+from core.openai.cell import UserMessage, SystemMessage
 from settings.server import ServerSetting
-from webhook.event_type import Issue
-from webhook.handler import GithubWebhookHandler
+from core.utils import get_repo_setting, Card, RepoSetting
+from core.webhook.event_type import Issue
+from core.webhook.handler import GithubWebhookHandler
 
 load_dotenv()
 

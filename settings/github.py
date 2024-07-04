@@ -1,5 +1,6 @@
 from typing import Type, Tuple
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict, PydanticBaseSettingsSource, TomlConfigSettingsSource
 
 
@@ -26,4 +27,5 @@ class Github(BaseSettings):
         return uid.lower() in [x.lower() for x in self.owner]
 
 
+load_dotenv()
 GithubSettings = Github()

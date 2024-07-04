@@ -135,3 +135,8 @@ dist
 # Ignore environment variable files
 backend/.env
 frontend/.env
+**/**/.env
+**/**/.env.local
+**/**/.env.development.local
+/core/http_cache.sqlite
+/http_cache.sqlite

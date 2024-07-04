@@ -5,7 +5,7 @@ from github.Repository import Repository
 from loguru import logger
 from pydantic import BaseModel, model_validator
 
-from app.cache import ExpiringDict
+from .cache import ExpiringDict
 
 setting_cache = ExpiringDict(max_len=100, max_age_seconds=60 * 60 * 12)  # 12 hours
 
