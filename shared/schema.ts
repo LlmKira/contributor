@@ -19,7 +19,7 @@ const githubRepoUrlSchema = z
 
 
 export const cardSchema = z.object({
-    cardId: z.string().max(50).uuid().default(uuidv4),
+    cardId: z.string().max(100).uuid().default(uuidv4),
     openaiEndpoint: z.string().max(100).url('Must be a valid URL.'),
     apiModel: z.string().max(100),
     apiKey: z.string().max(100),

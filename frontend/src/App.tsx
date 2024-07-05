@@ -51,7 +51,7 @@ const App: React.FC = () => {
         openaiEndpoint: 'https://api.openai.com/v1/',
         apiModel: '',
         apiKey: '',
-        repoUrl: '',
+        repoUrl: 'https://github.com/LlmKira/contributor',
         userId: '',
         disabled: false,
     }));
@@ -158,7 +158,7 @@ const App: React.FC = () => {
                 openaiEndpoint: 'https://api.openai.com/v1/',
                 apiModel: '',
                 apiKey: '',
-                repoUrl: '',
+                repoUrl: 'https://github.com/LlmKira/contributor',
                 userId: user.uid,
                 disabled: false,
             }));
