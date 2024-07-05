@@ -142,13 +142,14 @@ const App: React.FC = () => {
         } else {
             newCard.repoUrl = repoUrl;
         }
-
         try {
-            const validCard = cardSchema.parse(newCard);
             if (!user?.uid) {
                 console.error('No user found.');
                 return;
+            } else {
+                newCard.userId = user.uid;
             }
+            const validCard = cardSchema.parse(newCard);
             const createdCard = await apiService.createUserCard(validCard, user.uid);
             setCards([...cards, createdCard]);
             // Reset new card state
@@ -165,7 +166,10 @@ const App: React.FC = () => {
             setSnackbarOpen(true);
         } catch (error) {
             if (error instanceof z.ZodError) {
-                setSnackbarMessage('Validation Error: ' + error.errors.map(e => e.message).join(', '));
+                // 显示出错的属性
+                setSnackbarMessage(
+                    'Validation Error: ' + error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+                );
             } else {
                 console.error('Error adding card:', error);
             }
