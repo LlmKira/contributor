@@ -65,8 +65,7 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
                 SystemMessage(content="You are a github bot, you are helping to improve the issue content."),
                 UserMessage(content=repo_details),
                 UserMessage(content=prompt)
-            ],
-            max_tokens=800
+            ]
         ).request(
             session=oai_credential
         )
