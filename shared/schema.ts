@@ -18,26 +18,15 @@ const githubRepoUrlSchema = z
     );
 
 
-export const cardInputSchema = z.object({
-    cardId: z.string().uuid().optional().default(uuidv4),
-    openaiEndpoint: z.string().url().optional(),
-    apiModel: z.string().optional(),
-    apiKey: z.string().optional(),
-    userId: z.string().optional(),
-    repoUrl: z.string().optional(),
-    disabled: z.boolean().optional().default(false),
-});
-
 export const cardSchema = z.object({
     cardId: z.string().uuid().default(uuidv4),
     openaiEndpoint: z.string().url('Must be a valid URL.'),
-    apiModel: z.string().min(1),
-    apiKey: z.string().min(1),
-    userId: z.string().min(1),
+    apiModel: z.string(),
+    apiKey: z.string(),
+    userId: z.string(),
     repoUrl: githubRepoUrlSchema,
     disabled: z.boolean().default(false),
 });
-export type CardInputT = z.infer<typeof cardInputSchema>;
 export type CardT = z.infer<typeof cardSchema>;
 
 // User Schema
