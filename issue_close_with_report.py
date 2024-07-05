@@ -15,14 +15,14 @@ from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
 prompt_rule = """
-确保报告专业、全面，并具有简洁性和可读性。
-任何阅读 Closed Issue Report 的人都可以清晰了解问题及其解决方法。
-1. 条理清晰，简洁明了，格式规范。
-2. 不要杜撰不存在的信息。按照事实描述情况。
-3. 总结问题及最终的结果，以便他人更快地理解问题。
-4. 如果情况复杂，可以使用 Markdown 表格，Mermaid 流程图进行说明。
-5. 报告应该包含整篇摘要，应该详细描述问题和解决方案。
-6. 报告需要感谢贡献者。
+Write a brief, formal report describing the solution and final outcome of an issue. Specific requirements are as follows:
+
+1. **Avoid content repetition and consolidate descriptions.**
+2. **Do not fabricate nonexistent information or contributors.**
+3. **Improve formatting using formal language.**
+4. **Use Markdown tables or Mermaid flowcharts if the situation is complex.**
+5. **Maintain a concise and consistent style throughout the report.**
+6. **You may thank contributors at the end.**
 """
 
 
@@ -61,10 +61,10 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT) -> None:
         report = await OpenAI(
             model=credit_card.apiModel,
             messages=[
-                SystemMessage(content="You are a github bot, you are helping to close the issue."),
+                SystemMessage(content="You are a github contributor, you are helping to write a report."),
                 UserMessage(content="\n".join(prompt_docs)),
                 UserMessage(
-                    content=f"\nTask: {prompt_rule}"
+                    content=f"\n{prompt_rule}"
                             f"**Please write a closed report for this issue in {repo_setting.language}.**"
                 )
             ]).request(
