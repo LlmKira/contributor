@@ -66,7 +66,7 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         logger.error(f"Failed to unify issue title: {e}")
         return None
     if better_issue:
-        title = better_issue.title
+        title = better_issue.issue_title
         logger.info(f"Standardized title: {title}")
         issue = event.get_issue(integration=git_integration)
         issue.edit(
@@ -80,4 +80,4 @@ class FormatResult(BaseModel):
     """
     Standardize issue title
     """
-    title: str = Field(..., description="Standardized title")
+    issue_title: str = Field(..., description="Standardized issue title")

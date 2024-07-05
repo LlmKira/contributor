@@ -52,11 +52,18 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
         f"\n\nRule: {prompt_rule}"
         f"\nPlease standardize the body of this issue in {repo_setting.language}."
     )
+    repo_details = (
+        f"Hint: This issue is from {event.repository.owner.login}"
+        f"\nRepository: {event.repository.full_name}"
+        f"\nRepo Desc: {event.repository.description}"
+        f"\nRepo Topics: {event.repository.topics}"
+    )
     try:
         oai_result = await OpenAI(
             model=credit_card.apiModel,
             messages=[
                 SystemMessage(content="You are a github bot, you are helping to improve the issue content."),
+                UserMessage(content=repo_details),
                 UserMessage(content=prompt)
             ]
         ).request(

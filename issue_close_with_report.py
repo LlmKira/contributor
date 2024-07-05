@@ -55,6 +55,12 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT) -> None:
         return
 
     prompt_docs = generate_prompt(event, repo_setting)
+    repo_details = (
+        f"Hint: This issue is from {event.repository.owner.login}"
+        f"\nRepository: {event.repository.full_name}"
+        f"\nRepo Desc: {event.repository.description}"
+        f"\nRepo Topics: {event.repository.topics}"
+    )
     logger.debug(f"Prompt: {prompt_docs}")
     try:
         assert prompt_docs, "Empty docs"
@@ -62,6 +68,7 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT) -> None:
             model=credit_card.apiModel,
             messages=[
                 SystemMessage(content="You are a github contributor, you are helping to write a report."),
+                SystemMessage(content=repo_details),
                 UserMessage(content="\n".join(prompt_docs)),
                 UserMessage(
                     content=f"\n{prompt_rule}"
