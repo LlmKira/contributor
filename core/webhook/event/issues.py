@@ -10,7 +10,7 @@ from ._base import BaseIssue, Repository, Sender, Installation, BaseUser, Organi
 
 class IssueUser(BaseUser):
     id: int
-    login: int
+    login: str
     type: Optional[Literal["Bot", "User", "Organization"]] = None
     """Can be one of: Bot, User, Organization"""
 
