@@ -48,8 +48,9 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
     )
 
     if extract_label:
-        logger.info(f"Add labels: {extract_label.best_labels[:3]} to issue {event.issue.html_url}")
+        best_labels = extract_label.best_labels[:3]
+        logger.info(f"Add labels: {best_labels} to issue {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
-        issue.add_to_labels(*extract_label.best_labels[:3])
-        operation.labels = extract_label.best_labels[:3]
+        issue.add_to_labels(*best_labels)
+        operation.labels = best_labels
         await global_client.save(operation)

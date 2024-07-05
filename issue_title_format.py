@@ -67,7 +67,7 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         return None
     if better_issue:
         title = better_issue.issue_title
-        logger.info(f"Standardized title: {title}")
+        logger.info(f"Standardized title: {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
         issue.edit(
             title=title

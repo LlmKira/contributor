@@ -74,7 +74,7 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
         logger.error(f"Failed to unify issue body: {e}")
         return None
     if better_issue:
-        logger.info(f"Update issue body to {better_issue}")
+        logger.info(f"Update issue body to {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
         issue.edit(
             body=better_issue
