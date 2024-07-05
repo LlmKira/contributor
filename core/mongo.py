@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -68,11 +67,7 @@ if not MongoSetting.available:
     raise ValueError("MongoDB Connection Error")
 
 
-async def init():
+async def init_database():
     global_client = AsyncIOMotorClient(MongoSetting.mongodb_dsn)
     await init_beanie(database=global_client.dbname, document_models=[IssueOperation])
     logger.info("Beanie initialized")
-
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(init())
