@@ -59,7 +59,7 @@ class Issue(BaseIssue):
     title: str
     updated_at: str
     url: str
-    user: dict
+    user: IssueUser
 
 
 class OpenedIssueOpenEvent(BaseEvent):
