@@ -99,19 +99,12 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const fetchUser = async () => {
-            try {
-                const fetchedUser = await apiService.fetchUser();
-                setUser(fetchedUser);
-                const userCards = await apiService.fetchUserCards(fetchedUser.uid);
-                setCards(userCards);
-            } catch (err) {
-                console.error('Error fetching user:', err);
-            }
+            const fetchedUser = await apiService.fetchUser();
+            setUser(fetchedUser);
+            const userCards = await apiService.fetchUserCards(fetchedUser.uid);
+            setCards(userCards);
         };
-
-        fetchUser().then(
-            () => console.log('User fetched successfully.')
-        ).catch(
+        fetchUser().catch(
             (err) => console.error('Error fetching user:', err)
         );
     }, []);
