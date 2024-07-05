@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import datetime
 from typing import Optional, Literal, Union
 
 from github import GithubIntegration
@@ -38,7 +38,7 @@ class Issue(BaseIssue):
     closed_at: str | None
     comments: int
     comments_url: str
-    created_at: str
+    created_at: datetime.datetime
     draft: Optional[bool] = None
     events_url: str
     html_url: str
