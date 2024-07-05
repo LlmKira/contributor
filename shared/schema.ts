@@ -19,8 +19,8 @@ const githubRepoUrlSchema = z
 
 
 export const cardSchema = z.object({
-    cardId: z.string().uuid().default(uuidv4),
-    openaiEndpoint: z.string().url('Must be a valid URL.'),
+    cardId: z.string().max(50).uuid().default(uuidv4),
+    openaiEndpoint: z.string().max(100).url('Must be a valid URL.'),
     apiModel: z.string().max(100),
     apiKey: z.string().max(100),
     userId: z.string().max(100),
@@ -31,7 +31,7 @@ export type CardT = z.infer<typeof cardSchema>;
 
 // User Schema
 export const userSchema = z.object({
-    uid: z.string(),
+    uid: z.string().max(100),
     name: z.string().max(100),
     login: z.string(),
     accessToken: z.string(),
