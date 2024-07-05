@@ -49,10 +49,11 @@ async def fetch_operation(
             IssueOperation.repo_name == repo_name  # noqa
         )
         if not saved_issue:
-            await IssueOperation(
+            saved_issue = IssueOperation(
                 issue_id=issue_id,
                 repo_name=repo_name,
-            ).insert()  # noqa
+            )
+            await saved_issue.insert()  # noqa
         return saved_issue
     except Exception as e:
         logger.error(f"Failed to save issue operation: {e}")
