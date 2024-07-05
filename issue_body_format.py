@@ -1,20 +1,19 @@
 from loguru import logger
-from pydantic import BaseModel, Field
 
 from const import git_integration, get_credentials, fetch_operation
 from core.mongo import global_client
 from core.openai import OpenAI
-from core.openai.cell import UserMessage
+from core.openai.cell import UserMessage, SystemMessage
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
 format_prompt = """
-整理 issue 的内容，确保内容清晰，简洁，明了。
+按照国际规范整理改善用户提出的 issue 的内容，确保结构清晰、简洁、易读。
 1. 如果内容涉及流程，可以使用 mermaid 图表进行解释。
 2. 如果问题较为简单，附加推测原因和解决方案。
 3. 如果含有多个问题，可以尝试使用Markdown表格进行分类说明。
 4. 不要添加不存在的或者不确定的信息。
-将 issue 的内容整理成清晰的结构，有助于他人更快的理解问题，提高解决问题的效率。
+5. 直接给出改善后的内容，不需要多余的描述。
 """
 
 
@@ -45,34 +44,31 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
     except Exception as e:
         return logger.info(f"Skip get credit: {e}")
     prompt = (
-        f"Issue: {event.issue.title}"
-        f"\nContent: {event.issue.body}"
-        f"\n\nFormat: {prompt_rule}"
+        f"Issue:"
+        f"\n## {event.issue.title}"
+        f"\n{event.issue.body}"
+        f"\n\nRule: {prompt_rule}"
         f"\nPlease standardize the body of this issue in {repo_setting.language}."
     )
     try:
-        better_issue: FormatResult = await OpenAI(
+        oai_result = await OpenAI(
             model=credit_card.apiModel,
-            messages=[UserMessage(content=prompt)]
-        ).extract(
-            response_model=FormatResult,
+            messages=[
+                SystemMessage(content="You are a github bot, you are helping to improve the issue content."),
+                UserMessage(content=prompt)
+            ]
+        ).request(
             session=oai_credential
         )
+        better_issue = oai_result.default_message.content
     except Exception as e:
         logger.error(f"Failed to unify issue body: {e}")
         return None
     if better_issue:
-        logger.info(f"Update issue title to {better_issue.content}")
+        logger.info(f"Update issue body to {better_issue}")
         issue = event.get_issue(integration=git_integration)
         issue.edit(
-            body=better_issue.content
+            body=better_issue
         )
-        operation.body_format = True
+        operation.body_format = better_issue
         await global_client.save(operation)
-
-
-class FormatResult(BaseModel):
-    """
-    Standardize issue title
-    """
-    content: str = Field(..., description="Content")

@@ -52,7 +52,7 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         f"Issue: {event.issue.title}"
         f"\nContent: {event.issue.body}"
         f"\n\nFormat: {prompt_rule}"
-        f"\nPlease standardize the title of this issue in {repo_setting.language}."
+        f"\nPlease standardize the title of this issue in English."
     )
     try:
         better_issue: FormatResult = await OpenAI(
@@ -66,12 +66,13 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         logger.error(f"Failed to unify issue title: {e}")
         return None
     if better_issue:
-        logger.info(f"Standardized title: {better_issue.standardize_title}")
+        title = better_issue.title
+        logger.info(f"Standardized title: {title}")
         issue = event.get_issue(integration=git_integration)
         issue.edit(
-            title=better_issue.standardize_title
+            title=title
         )
-        operation.title_format = True
+        operation.title_format = title
         await global_client.save(operation)
 
 
@@ -79,4 +80,4 @@ class FormatResult(BaseModel):
     """
     Standardize issue title
     """
-    standardize_title: str = Field(..., description="Standardized title")
+    title: str = Field(..., description="Standardized title")
