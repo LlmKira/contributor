@@ -26,18 +26,14 @@ git_integration = GithubIntegration(
 
 
 async def get_credentials(repo_name, repo: Repository):
-    try:
-        return await CreditFetcher.get(
-            repo_setting=get_repo_setting(
-                repo_name=repo_name,
-                repo=repo
-            ),
-            dash_api=ServerSetting.dashboard_api,
-            token_secret=ServerSetting.token_secret
-        )
-    except Exception as e:
-        logger.info(f"Skip get credit: {e}")
-        return None, None
+    return await CreditFetcher.get(
+        repo_setting=get_repo_setting(
+            repo_name=repo_name,
+            repo=repo
+        ),
+        dash_api=ServerSetting.dashboard_api_url,
+        token_secret=ServerSetting.token_secret
+    )
 
 
 async def fetch_operation(
