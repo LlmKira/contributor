@@ -19,7 +19,7 @@ import {keyframes} from '@emotion/react';
 import GithubLogin, {handleGithubLogin} from "./components/GithubLogin.tsx";
 import CardComponent from './components/CardComponent';
 import ApiService from './services/ApiService';
-import {cardSchema, type CardT, type UserT} from "@shared/schema.ts";
+import {cardInputSchema, type CardInputT, cardSchema, type CardT, type UserT} from "@shared/schema.ts";
 import {z} from "zod";
 import {extractGitHubRepoUrl} from "@shared/validate.ts";
 
@@ -46,7 +46,7 @@ const App: React.FC = () => {
     const [user, setUser] = useState<UserT | null>(null);
     const [cards, setCards] = useState<CardT[]>([]);
     // Initialize state with validated default values
-    const [newCard, setNewCard] = useState<CardT>(() => cardSchema.parse({
+    const [newCard, setNewCard] = useState<CardInputT>(() => cardInputSchema.parse({
         cardId: uuidv4(),
         openaiEndpoint: 'https://api.openai.com/v1/',
         apiModel: '',
@@ -149,11 +149,10 @@ const App: React.FC = () => {
                 console.error('No user found.');
                 return;
             }
-
             const createdCard = await apiService.createUserCard(validCard, user.uid);
             setCards([...cards, createdCard]);
             // Reset new card state
-            setNewCard(cardSchema.parse({
+            setNewCard(cardInputSchema.parse({
                 cardId: uuidv4(),
                 openaiEndpoint: 'https://api.openai.com/v1/',
                 apiModel: '',

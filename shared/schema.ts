@@ -17,7 +17,17 @@ const githubRepoUrlSchema = z
         {message: 'Must be a valid GitHub repository URL.'}
     );
 
-// 创建简化后的 Zod schema，并加入内置校验
+
+export const cardInputSchema = z.object({
+    cardId: z.string().uuid().optional().default(uuidv4),
+    openaiEndpoint: z.string().url().optional(),
+    apiModel: z.string().optional(),
+    apiKey: z.string().optional(),
+    userId: z.string().optional(),
+    repoUrl: z.string().optional(),
+    disabled: z.boolean().optional().default(false),
+});
+
 export const cardSchema = z.object({
     cardId: z.string().uuid().default(uuidv4),
     openaiEndpoint: z.string().url('Must be a valid URL.'),
@@ -27,7 +37,7 @@ export const cardSchema = z.object({
     repoUrl: githubRepoUrlSchema,
     disabled: z.boolean().default(false),
 });
-
+export type CardInputT = z.infer<typeof cardInputSchema>;
 export type CardT = z.infer<typeof cardSchema>;
 
 // User Schema

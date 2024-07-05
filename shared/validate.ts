@@ -1,4 +1,7 @@
-function extractGitHubRepoUrl(text: string): string {
+function extractGitHubRepoUrl(text: string | undefined): string {
+    if (!text) {
+        return '';
+    }
     const githubRepoUrlPattern = /https?:\/\/github\.com\/[\w-]+\/[\w-]+/g;
     const matches = text.match(githubRepoUrlPattern);
     return matches ? matches[0] : '';
