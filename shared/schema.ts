@@ -6,14 +6,25 @@ export enum Platform {
     GitHub = "github",
 }
 
-// 定义 Zod Schema
+// 自定义校验函数，用于检查 repoUrl 是否是一个有效的 GitHub 仓库地址
+const githubRepoUrlSchema = z
+    .string()
+    .refine(
+        (value) => {
+            const githubRepoUrlPattern = /https?:\/\/github\.com\/[\w-]+\/[\w-]+/;
+            return githubRepoUrlPattern.test(value);
+        },
+        {message: 'Must be a valid GitHub repository URL.'}
+    );
+
+// 创建简化后的 Zod schema，并加入内置校验
 export const cardSchema = z.object({
     cardId: z.string().uuid().default(uuidv4),
-    openaiEndpoint: z.string(),
-    apiModel: z.string(),
-    apiKey: z.string(),
-    userId: z.string(),
-    repoUrl: z.string(),
+    openaiEndpoint: z.string().url('Must be a valid URL.'),
+    apiModel: z.string().min(1),
+    apiKey: z.string().min(1),
+    userId: z.string().min(1),
+    repoUrl: githubRepoUrlSchema,
     disabled: z.boolean().default(false),
 });
 

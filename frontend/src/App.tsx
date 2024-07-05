@@ -21,6 +21,7 @@ import CardComponent from './components/CardComponent';
 import ApiService from './services/ApiService';
 import {cardSchema, type CardT, type UserT} from "@shared/schema.ts";
 import {z} from "zod";
+import {extractGitHubRepoUrl} from "@shared/validate.ts";
 
 const apiService = new ApiService(import.meta.env.VITE_BACKEND_URL, localStorage);
 
@@ -132,25 +133,18 @@ const App: React.FC = () => {
 
 
     const handleAddCard = async () => {
-        const githubRepoUrlRegex = /^https:\/\/github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/;
-
-        // Validate the card object using Zod
-        if (!newCard.openaiEndpoint || !newCard.apiModel || !newCard.apiKey || !newCard.repoUrl) {
-            setSnackbarMessage('All fields are required.');
-            setSnackbarOpen(true);
-            return; // Stop the function if any field is empty
-        }
-
         // Validate the GitHub repository URL
-        if (!githubRepoUrlRegex.test(newCard.repoUrl)) {
-            setSnackbarMessage('Invalid GitHub repository URL. Please enter a valid URL.');
+        const repoUrl = extractGitHubRepoUrl(newCard.repoUrl);
+        if (!repoUrl) {
+            setSnackbarMessage('Invalid GitHub repository URL.');
             setSnackbarOpen(true);
-            return; // Stop the function if the URL is invalid
+            return;
+        } else {
+            newCard.repoUrl = repoUrl;
         }
 
         try {
             const validCard = cardSchema.parse(newCard);
-
             if (!user?.uid) {
                 console.error('No user found.');
                 return;
@@ -158,7 +152,6 @@ const App: React.FC = () => {
 
             const createdCard = await apiService.createUserCard(validCard, user.uid);
             setCards([...cards, createdCard]);
-
             // Reset new card state
             setNewCard(cardSchema.parse({
                 cardId: uuidv4(),
@@ -169,7 +162,6 @@ const App: React.FC = () => {
                 userId: user.uid,
                 disabled: false,
             }));
-
             setSnackbarMessage('Card added successfully.');
             setSnackbarOpen(true);
         } catch (error) {
