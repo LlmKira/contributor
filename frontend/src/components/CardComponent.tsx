@@ -1,18 +1,18 @@
 import React from 'react';
 import {
     Box,
+    Button,
     Card,
     CardContent,
-    Typography,
-    IconButton,
-    TextField,
-    Button,
     Chip,
+    IconButton,
+    Switch,
     Table,
     TableBody,
-    TableRow,
     TableCell,
-    Switch
+    TableRow,
+    TextField,
+    Typography
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -59,6 +59,7 @@ interface CardComponentProps {
         apiKey: string;
     };
     editMode: {
+        cardId: string;
         field: string;
     };
     confirmDelete?: string | null
@@ -134,7 +135,7 @@ const CardComponent: React.FC<CardComponentProps> = (
                         <TableRow>
                             <TableCell><strong>OpenAI Endpoint</strong></TableCell>
                             <TableCell>
-                                {editMode.field === 'openaiEndpoint' ? (
+                                {editMode.cardId === card.cardId && editMode.field === 'openaiEndpoint' ? (
                                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                                         <TextField
                                             fullWidth
@@ -162,7 +163,7 @@ const CardComponent: React.FC<CardComponentProps> = (
                         <TableRow>
                             <TableCell><strong>Model</strong></TableCell>
                             <TableCell>
-                                {editMode.field === 'apiModel' ? (
+                                {editMode.cardId === card.cardId && editMode.field === 'apiModel' ? (
                                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                                         <TextField
                                             fullWidth
@@ -190,7 +191,7 @@ const CardComponent: React.FC<CardComponentProps> = (
                         <TableRow>
                             <TableCell><strong>API Key</strong></TableCell>
                             <TableCell>
-                                {editMode.field === 'apiKey' ? (
+                                {editMode.cardId === card.cardId && editMode.field === 'apiKey' ? (
                                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                                         <TextField
                                             fullWidth
@@ -218,7 +219,7 @@ const CardComponent: React.FC<CardComponentProps> = (
                         <TableRow>
                             <TableCell><strong>Repository URL</strong></TableCell>
                             <TableCell>
-                                {editMode.field === 'repoUrl' ? (
+                                {editMode.cardId === card.cardId && editMode.field === 'repoUrl' ? (
                                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                                         <TextField
                                             fullWidth
