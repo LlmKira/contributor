@@ -2,56 +2,54 @@
 
 -----------------
 
-# Contributor GitHub App
+# Custom AI Assistant
 
 [中文README](README_CN.md)
 
 > [!WARNING]
 > Our App is still in the testing phase, so we maybe clear user data. Please be careful when using it.
 
-✨ Welcome to the Contributor GitHub App! ✨
-
 In a nutshell, to better manage projects, we need an enhanced Issue management tool. This is why I created this project.
-
-🤖 By configuring bots with repository files, everyone can freely customize the bot. The bot will automatically handle
+By configuring bots with repository files, everyone can freely customize the bot. The bot will automatically handle
 repository events based on the configuration file.
 
-🐇 This project was inspired by
-the [https://github.com/coderabbitai/ai-pr-reviewer/](https://github.com/coderabbitai/ai-pr-reviewer/) project. However,
-it's unfortunate that they have decided to close their repository and code. Using it requires additional payment, and
+This project was inspired by
+the [ai-pr-reviewer](https://github.com/coderabbitai/ai-pr-reviewer/) project
+
+However, it's unfortunate that they have decided to close their repository and code. Using it requires additional
+payment, and
 although payment is necessary, I don't like closed systems and monthly billing. I prefer open, pay-as-you-go (or
 self-hosted) services.
 
-🚀 This repository includes a configuration file template, which you can use to set up your bot. Sensitive information
+This repository includes a configuration file template, which you can use to set up your bot. Sensitive information
 such as keys can be configured through my panel.
 
-[**Install to your Repo**](https://github.com/apps/neutron-nerve)
-
-[**Access the Dashboard**](https://contributor.dianas.cyou)
+[**Dashboard**](https://contributor.dianas.cyou)
 
 [**Get AI Service all-in-one**](https://www.ohmygpt.com/)
 
-## Features
+## Quick Start
 
-| Feature                         | Description                                                             | Configuration Section     |
-|---------------------------------|-------------------------------------------------------------------------|---------------------------|
-| 🌐 **Dashboard**                | Intuitive web panel for managing sensitive data and key configurations. | -                         |
-| 📂 **Auto Labeling**            | Automatically label issues based on the configuration file.             | `issue_auto_label`        |
-| 🗂 ~~**Issue Summary**~~        | Generate a summary of issues based on the configuration file.           | -                         |
-| 📝 **Issue Closed Report**      | Generate a report when an issue is closed.                              | `issue_close_with_report` |
-| 📦 ~~**Release Note**~~         | Generate release notes based on the configuration file.                 | -                         |
-| 📚 ~~**Documentation**~~        | Automatically translate documentation.                                  | -                         |
-| 📌 ~~**Issue Title Standard**~~ | Standardize issue titles.                                               | `issue_auto_tidy`         |
-
-## How to Use
-
-1. **Install the App**: Install the app to your repository.
+1. **Install the App**: Click [**Install to your Repo**](https://github.com/apps/neutron-nerve).
 2. **Get Repo Token**: Add apikeys and other sensitive information to
-   the [Dashboard](https://contributor.dianas.cyou).
+   the [App Dashboard](https://contributor.dianas.cyou).
 3. **Build the `.nerve.toml` File**: Create a configuration file based on the template. [Example](.nerve.toml)
 
-> **Note**: The panel is only used to store API-related keys. You fill in the UUID to your repository, and GithubApp
+> [!INFO]
+> The panel is only used to store API-related keys. You fill in the UUID to your repository, and GithubApp
 > collaborates with the repository to finally obtain the customized configuration.
+
+## Features
+
+| Feature                     | Description                                                             | Configuration Section     |
+|-----------------------------|-------------------------------------------------------------------------|---------------------------|
+| 🌐 **Dashboard**            | Intuitive web panel for managing sensitive data and key configurations. | -                         |
+| 📂 **Auto Labeling**        | Automatically label issues based on the configuration file.             | `issue_auto_label`        |
+| 📝 **Issue Closed Report**  | Generate a report when an issue is closed.                              | `issue_close_with_report` |
+| 📌 **Issue Title Standard** | Standardize issue titles.                                               | `issue_auto_tidy`         |
+| 🗂 ~~**Issue Summary**~~    | Generate a summary of issues based on the configuration file.           | -                         |
+| 📦 ~~**Release Note**~~     | Generate release notes based on the configuration file.                 | -                         |
+| 📚 ~~**Documentation**~~    | Automatically translate documentation.                                  | -                         |
 
 ```mermaid
 sequenceDiagram
@@ -88,18 +86,18 @@ from core.webhook.event_type import IssueComment
 
 @webhook_handler.listen(IssueComment, action=IssueComment.CREATED, unique_id="uuid")
 async def handle_issue_comment(event: IssueComment.CREATED_EVENT):
-   logger.info("Received IssueComment.CREATED event")
-   repo_setting = get_repo_setting(
-      repo_name=event.repository.full_name,
-      repo=event.repository.get_repo(git_integration)
-   )
-   # repo_setting is the content of the .nerve.toml file
-   issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
-   comment = issue.create_comment(f"Hello World!")
-   issue.get_comment(comment.id).edit("Hello World! Edited")
-   print(f"Issue: {event.issue.title}")
-   print(f"Comment: {event.comment.body}")
-   print(f"Repo: {event.repository.full_name}")
+    logger.info("Received IssueComment.CREATED event")
+    repo_setting = get_repo_setting(
+        repo_name=event.repository.full_name,
+        repo=event.repository.get_repo(git_integration)
+    )
+    # repo_setting is the content of the .nerve.toml file
+    issue = event.repository.get_issue(integration=git_integration, issue_number=event.issue.number)
+    comment = issue.create_comment(f"Hello World!")
+    issue.get_comment(comment.id).edit("Hello World! Edited")
+    print(f"Issue: {event.issue.title}")
+    print(f"Comment: {event.comment.body}")
+    print(f"Repo: {event.repository.full_name}")
 ```
 
 The same event can have multiple listeners, as long as each listener has a different `unique_id`.

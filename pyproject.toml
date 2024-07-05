@@ -19,6 +19,8 @@ dependencies = [
     "toml>=0.10.2",
     "aiohttp>=3.9.5",
     "requests-cache>=1.2.1",
+    "pymongo>=4.8.0",
+    "odmantic>=1.0.2",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
