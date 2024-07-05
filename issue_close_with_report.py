@@ -104,6 +104,8 @@ def generate_prompt(event: Issue.CLOSED_EVENT, repo_setting) -> List[str]:
 
         selected_comments = dict(sorted(selected_comments.items()))
     for comment in selected_comments.values():
+        if comment.user.type == "Bot":
+            continue
         oai_body.append(f"Comment#{comment.id}:\n @{comment.user.login} said: {comment.body}\n")
 
     if issue.pull_request:
