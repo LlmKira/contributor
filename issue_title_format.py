@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from const import git_integration, get_credentials, fetch_operation
 from core.mongo import global_client
 from core.openai import OpenAI
-from core.openai.cell import UserMessage
+from core.openai.cell import UserMessage, SystemMessage
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
@@ -52,14 +52,17 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         f"Issue: {event.issue.title}"
         f"\nContent: {event.issue.body}"
         f"\n\nFormat: {prompt_rule}"
-        f"\nPlease standardize the title of this issue in English."
+        f"\nPlease improve the title of this issue in English."
     )
     try:
-        better_issue: FormatResult = await OpenAI(
+        better_issue: BetterIssue = await OpenAI(
             model=credit_card.apiModel,
-            messages=[UserMessage(content=prompt)]
+            messages=[
+                SystemMessage(content="You are a github bot, you are helping to improve the issue title."),
+                UserMessage(content=prompt)
+            ]
         ).extract(
-            response_model=FormatResult,
+            response_model=BetterIssue,
             session=oai_credential
         )
     except Exception as e:
@@ -76,8 +79,8 @@ async def issue_title_format(event: Issue.OPENED_EVENT):
         await global_client.save(operation)
 
 
-class FormatResult(BaseModel):
+class BetterIssue(BaseModel):
     """
-    Standardize issue title
+    Improved issue content
     """
-    issue_title: str = Field(..., description="Standardized issue title")
+    issue_title: str = Field(..., description="Improved issue title")
