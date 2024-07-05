@@ -8,10 +8,8 @@ from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
 format_prompt = """
-Organize and refine the content of the issues raised by users according to international standards, 
-ensuring the structure is clear, concise, and readable.
-Enhance the readability of the issue content by following these guidelines:
-1. If the content involves a process, use a mermaid diagram to explain.
+Summary the content of the issue and improve the readability by following these guidelines:
+1. Should be **short** and concise.
 2. If there are multiple issues, use a Markdown table to categorize and explain.
 3. Do not add non-existent or uncertain information.
 4. Provide the improved content directly without unnecessary descriptions.
@@ -67,7 +65,8 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
                 SystemMessage(content="You are a github bot, you are helping to improve the issue content."),
                 UserMessage(content=repo_details),
                 UserMessage(content=prompt)
-            ]
+            ],
+            max_tokens=800
         ).request(
             session=oai_credential
         )
