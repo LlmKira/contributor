@@ -8,7 +8,7 @@ from loguru import logger
 from pydantic import SecretStr, BaseModel, Field
 
 from .openai import OpenAICredential, OpenAI
-from .openai.cell import UserMessage, SystemMessage
+from .openai.cell import UserMessage
 from .utils import Card, RepoSetting
 
 
@@ -94,34 +94,4 @@ class AIPromptProcessor:
             )
         except Exception as e:
             logger.error(f"Failed to get labels: {e}")
-            return None
-
-    @staticmethod
-    async def create_issue_report(
-            oai_credential: OpenAICredential,
-            credit_card: Card,
-            docs: List[str] = None
-    ):
-        try:
-            assert docs, "Empty docs"
-            report = await OpenAI(
-                model=credit_card.apiModel,
-                messages=[
-                    SystemMessage(content="You are a github bot, you are helping to close the issue."),
-                    UserMessage(content="\n".join(docs)),
-                    UserMessage(
-                        content="Give a **report** based on the information you have. "
-                                "*If it is not mentioned in the text, then there is no need to write it.*"
-                                "The report should be concise and clear."
-                                "Summarize the problems users encountered and how they were solved."
-                                "You can also use `mermaid` to draw a flowchart.\n"
-                                "**Please write a closed report for this issue.**"
-                    )
-                ]).request(
-                session=oai_credential
-            )
-            assert report.default_message.content, "Empty report"
-            return report.default_message.content
-        except Exception as e:
-            logger.error(f"Failed to get report: {e}")
             return None

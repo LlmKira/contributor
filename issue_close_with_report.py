@@ -8,10 +8,22 @@ from github.PaginatedList import PaginatedList
 from loguru import logger
 
 from const import git_integration, get_credentials, fetch_operation
-from core.credit import AIPromptProcessor
 from core.mongo import global_client
+from core.openai import OpenAI
+from core.openai.cell import SystemMessage, UserMessage
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
+
+prompt_rule = """
+确保报告专业、全面，并具有简洁性和可读性。通过这种方法，任何阅读 Closed Issue Report 的人都可以清晰了解问题及其解决方法。
+1. 此报告面向的读者是技术人员，因此请使用专业术语。
+2. 不要杜撰不存在的信息。按照事实描述情况。
+3. 如果情况复杂，可采用 mermaid 流程图进行解释。
+4. 总结问题及最终的结果，以便他人更快地理解问题。
+5. 如果有多项问题，可以使用 Markdown 表格进行说明。
+6. 报告应该以摘要开头，然后详细描述问题和解决方案。
+7. 报告结尾总结贡献。
+"""
 
 
 # @webhook_handler.listen(Issue, action=Issue.CLOSED, unique_id="close_issue_with_report")
@@ -44,16 +56,25 @@ async def close_issue_with_report(event: Issue.CLOSED_EVENT) -> None:
 
     prompt_docs = generate_prompt(event, repo_setting)
     logger.debug(f"Prompt: {prompt_docs}")
-
     try:
-        report_content = await AIPromptProcessor.create_issue_report(
-            oai_credential=oai_credential,
-            credit_card=credit_card,
-            docs=prompt_docs
+        assert prompt_docs, "Empty docs"
+        report = await OpenAI(
+            model=credit_card.apiModel,
+            messages=[
+                SystemMessage(content="You are a github bot, you are helping to close the issue."),
+                UserMessage(content="\n".join(prompt_docs)),
+                UserMessage(
+                    content=f"\nTask: {prompt_rule}"
+                            f"**Please write a closed report for this issue in {repo_setting.language}.**"
+                )
+            ]).request(
+            session=oai_credential
         )
+        assert report.default_message.content, "Empty report"
+        report_content = report.default_message.content
     except Exception as e:
-        logger.error(f"Failed to create issue report: {e}")
-        return
+        logger.error(f"Failed to get report: {e}")
+        return None
 
     if report_content:
         logger.info(f"Add report to issue {event.issue.html_url}")
@@ -87,8 +108,14 @@ def generate_prompt(event: Issue.CLOSED_EVENT, repo_setting) -> List[str]:
 
     if issue.pull_request:
         oai_body.append(f"Pull Request: {issue.pull_request.html_url}")
-
-    oai_body.append(f"Report Using Language: {repo_setting.language}")
+    # 创建
+    oai_body.append(
+        f">Created By: @{event.issue.user.login} \nCreated At: {event.issue.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+    # 关闭
+    oai_body.append(
+        f">Closed By: @{event.sender.login} \nClosed At: {event.issue.closed_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
     return oai_body
 
 
