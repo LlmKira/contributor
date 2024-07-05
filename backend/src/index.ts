@@ -48,11 +48,6 @@ const getAvatarUrl = (provider: string, providerUserId: string): string => {
     }
 
 }
-
-const createCardId = (): string => {
-    return crypto.randomBytes(16).toString('hex');
-}
-
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
