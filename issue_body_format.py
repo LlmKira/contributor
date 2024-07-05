@@ -8,13 +8,15 @@ from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
 format_prompt = """
-按照国际规范整理改善用户提出的 issue 的内容，确保结构清晰、简洁、易读。
-1. 如果内容涉及流程，可以使用 mermaid 图表进行解释。
-2. 如果问题较为简单，附加推测原因和解决方案。
-3. 如果含有多个问题，可以尝试使用Markdown表格进行分类说明。
-4. 不要添加不存在的或者不确定的信息。
-5. 直接给出改善后的内容，不需要多余的描述。
-6. 不要遗漏任何细节。
+Organize and refine the content of the issues raised by users according to international standards, ensuring the structure is clear, concise, and readable.
+1. If the content involves a process, use a mermaid diagram to explain.
+2. If the issue is relatively simple, include possible causes and solutions.
+3. If there are multiple issues, use a Markdown table to categorize and explain.
+4. Do not add non-existent or uncertain information.
+5. Provide the improved content directly without unnecessary descriptions.
+6. Do not omit any details.
+7. Use formal language and maintain a consistent style.
+**8. Dont write the content that is not exist in original content.**
 """
 
 
