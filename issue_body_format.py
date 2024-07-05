@@ -2,7 +2,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from const import git_integration, get_credentials, fetch_operation
-from core.mongo import IssueOperation
+from core.mongo import global_client
 from core.openai import OpenAI
 from core.openai.cell import UserMessage
 from core.utils import get_repo_setting
@@ -67,10 +67,8 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
         issue.edit(
             body=better_issue.content
         )
-        await operation.set(
-            {IssueOperation.body_format: True},
-            # noqa
-        )
+        operation.body_format = True
+        await global_client.save(operation)
 
 
 class FormatResult(BaseModel):

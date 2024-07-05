@@ -6,7 +6,7 @@ from github.Repository import Repository
 from loguru import logger
 
 from core.credit import CreditFetcher
-from core.mongo import IssueOperation
+from core.mongo import IssueOperation, global_client
 from core.utils import get_repo_setting
 from core.webhook.handler import GithubWebhookHandler
 from settings.server import ServerSetting
@@ -40,7 +40,8 @@ async def fetch_operation(
         issue_id: int, repo_name: str
 ):
     try:
-        saved_issue = await IssueOperation.find_one(
+        saved_issue = await global_client.find_one(
+            IssueOperation,
             IssueOperation.issue_id == issue_id,  # noqa
             IssueOperation.repo_name == repo_name  # noqa
         )
@@ -49,7 +50,7 @@ async def fetch_operation(
                 issue_id=issue_id,
                 repo_name=repo_name,
             )
-            await saved_issue.insert()  # noqa
+            await global_client.save(saved_issue)
         return saved_issue
     except Exception as e:
         logger.error(f"Failed to save issue operation: {e}")

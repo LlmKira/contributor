@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from const import webhook_handler
-from core.mongo import init_database
 from core.webhook.event_type import Issue
 from issue_auto_label import issue_auto_label
 from issue_body_format import issue_body_format
@@ -20,7 +19,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 应用启动前的初始化操作
-    await init_database()
+    pass
     yield
     print("Application Shutdown")
 

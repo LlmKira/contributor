@@ -9,7 +9,7 @@ from loguru import logger
 
 from const import git_integration, get_credentials, fetch_operation
 from core.credit import AIPromptProcessor
-from core.mongo import IssueOperation
+from core.mongo import global_client
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
@@ -105,7 +105,5 @@ async def update_state(event: Issue.CLOSED_EVENT, report_content: str) -> None:
         reply.edit(report_content)
     else:
         reply = issue.create_comment(report_content)
-        await saved_issue.set(
-            {IssueOperation.report_comment_id: reply.id}
-            # noqa
-        )
+        saved_issue.report_comment_id = reply.id
+        await global_client.save(saved_issue)

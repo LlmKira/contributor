@@ -2,10 +2,11 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 import pymongo
-from beanie import init_beanie, Document
 from dotenv import load_dotenv
 from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
+from odmantic import AIOEngine
+from odmantic import Field as OdField, Model as OdModel
 from pydantic import Field
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
@@ -50,9 +51,9 @@ def utcnow():
     return datetime.now(tz=timezone.utc)
 
 
-class IssueOperation(Document):
+class IssueOperation(OdModel):
     issue_id: int
-    repo_name: str
+    repo_name: str = OdField(...)
     report_comment_id: Optional[int] = None
     title_format: Optional[str] = None
     body_format: Optional[str] = None
@@ -66,8 +67,8 @@ if not MongoSetting.available:
     logger.error("MongoDB Connection Error")
     raise ValueError("MongoDB Connection Error")
 
-
-async def init_database():
-    global_client = AsyncIOMotorClient(MongoSetting.mongodb_dsn)
-    await init_beanie(database=global_client.dbname, document_models=[IssueOperation])
-    logger.info("Beanie initialized")
+global_client = AIOEngine(
+    client=AsyncIOMotorClient(MongoSetting.mongodb_dsn),
+    database="contributor-app",
+)
+logger.info("Mongodb initialized")

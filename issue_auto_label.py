@@ -2,7 +2,7 @@ from loguru import logger
 
 from const import git_integration, get_credentials, fetch_operation
 from core.credit import AIPromptProcessor
-from core.mongo import IssueOperation
+from core.mongo import global_client
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
@@ -51,6 +51,5 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
         logger.info(f"Add labels: {extract_label.best_labels[:3]} to issue {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
         issue.add_to_labels(*extract_label.best_labels[:3])
-        await operation.set(
-            {IssueOperation.labels: extract_label.best_labels[:3]}
-        )  # noqa
+        operation.labels = extract_label.best_labels[:3]
+        await global_client.save(operation)
