@@ -212,22 +212,15 @@ app.post('/cards', async (req, res) => {
             res.status(401).send('Unauthorized');
             return;
         }
-        if (!req.body.cardId || !req.body.openaiEndpoint || !req.body.apiKey || !req.body.apiModel || !req.body.repoUrl) {
-            res.status(400).send('Missing required fields');
-            return;
-        }
-        if (req.body.cardId.length > 100 || req.body.openaiEndpoint.length > 100 || req.body.apiKey.length > 100 || req.body.apiModel.length > 100 || req.body.repoUrl.length > 100) {
-            res.status(400).send('Input too long');
+        const requestCard = cardSchema.safeParse(req.body);
+        if (!requestCard.success) {
+            res.status(400).send('Invalid card data');
             return;
         }
         const card = new Card({
-            cardId: req.body.cardId,
-            userId: req.user?.uid,
-            openaiEndpoint: req.body.openaiEndpoint,
-            apiKey: req.body.apiKey,
-            apiModel: req.body.apiModel,
-            repoUrl: req.body.repoUrl,
-        })
+            ...requestCard.data,
+            userId: req.user.uid,
+        });
         await card.save();
         res.json(
             cardSchema.parse(card)
@@ -241,11 +234,19 @@ app.post('/cards', async (req, res) => {
 app.put('/cards/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        if (req.body.cardId && req.body.cardId.length > 100 || req.body.openaiEndpoint && req.body.openaiEndpoint.length > 100 || req.body.apiKey && req.body.apiKey.length > 100 || req.body.apiModel && req.body.apiModel.length > 100 || req.body.repoUrl && req.body.repoUrl.length > 100) {
-            res.status(400).send('Input too long');
+        if (!req.user) {
+            res.status(401).send('Unauthorized');
             return;
         }
-        const card = await Card.findOneAndUpdate({cardId: id, userId: req.user?.uid}, req.body, {new: true});
+        const requestCard = cardSchema.safeParse(req.body);
+        if (!requestCard.success) {
+            res.status(400).send('Invalid card data');
+            return;
+        }
+        const card = await Card.findOneAndUpdate({
+            cardId: id,
+            userId: req.user.uid
+        }, requestCard.data, {new: true}).exec();
         if (!card) {
             res.status(404).send('Card not found');
         } else {
@@ -262,7 +263,11 @@ app.put('/cards/:id', async (req, res) => {
 app.delete('/cards/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        const result = await Card.deleteOne({cardId: id, userId: req.user?.uid});
+        if (!req.user) {
+            res.status(401).send('Unauthorized');
+            return;
+        }
+        const result = await Card.deleteOne({cardId: id, userId: req.user.uid});
         if (result.deletedCount === 0) {
             res.status(404).send('Card not found');
         } else {
