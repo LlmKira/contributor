@@ -1,7 +1,7 @@
 contributor = "ca8cd6da-b161-46ac-a50c-531319762d8f"
 # go dashboard to get your uuid
 
-language = "Chinese"
+language = "English"
 # The language of bot used
 
 issue_auto_label = true
