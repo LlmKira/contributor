@@ -65,7 +65,8 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
                 SystemMessage(content="You are a github bot, you are helping to improve the issue content."),
                 UserMessage(content=repo_details),
                 UserMessage(content=prompt)
-            ]
+            ],
+            max_tokens=800
         ).request(
             session=oai_credential
         )
@@ -77,9 +78,10 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
         logger.info(f"Update issue body to {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
         edited_body = (f"{issue.body}"
-                       f"\n----"
+                       f"\n\n----"
                        "\n<details>"
                        "\n<summary>Summary</summary>"
+                       f"\n{better_issue}"
                        "\n</details>"
                        )
         issue.edit(
