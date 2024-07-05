@@ -44,10 +44,11 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
         )
     except Exception as e:
         return logger.info(f"Skip get credit: {e}")
+    body = event.issue.body or "No description provided."
     prompt = (
         f"Issue:"
         f"\n## {event.issue.title}"
-        f"\n{event.issue.body}"
+        f"\n{body}"
         f"\n\nRule: {prompt_rule}"
         f"\nPlease standardize the body of this issue in {repo_setting.language}."
     )
