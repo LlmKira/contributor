@@ -208,7 +208,11 @@ const App: React.FC = () => {
                 return;
             }
             const updatedCard = {...card, disabled: !card.disabled};
-            await apiService.updateUserCard(cardId, updatedCard);
+            await apiService.updateUserCard(cardId, updatedCard).catch(
+                (err) => {
+                    console.error('Error updating card:', err);
+                }
+            )
             setCards(cards.map(c => c.cardId === cardId ? updatedCard : c));
             setSnackbarMessage('Card updated successfully.');
             setSnackbarOpen(true);

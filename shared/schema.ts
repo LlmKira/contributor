@@ -11,12 +11,11 @@ const githubRepoUrlSchema = z
     .string().max(100)
     .refine(
         (value) => {
-            const githubRepoUrlPattern = /https?:\/\/github\.com\/[\w-]+\/[\w-]+/;
+            const githubRepoUrlPattern = /^https?:\/\/github\.com\/[\w-]+\/[\w-]+\/?$/;
             return githubRepoUrlPattern.test(value);
         },
         {message: 'Must be a valid GitHub repository URL.'}
     );
-
 
 export const cardSchema = z.object({
     cardId: z.string().max(100).uuid().default(uuidv4),
@@ -28,7 +27,6 @@ export const cardSchema = z.object({
     disabled: z.boolean().default(false),
 });
 export type CardT = z.infer<typeof cardSchema>;
-
 // User Schema
 export const userSchema = z.object({
     uid: z.string().max(100),
