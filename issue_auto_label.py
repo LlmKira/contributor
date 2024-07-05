@@ -2,6 +2,7 @@ from loguru import logger
 
 from const import git_integration, get_credentials, fetch_operation
 from core.credit import AIPromptProcessor
+from core.mongo import IssueOperation
 from core.utils import get_repo_setting
 from core.webhook.event_type import Issue
 
@@ -23,7 +24,7 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
     )
     if not operation:
         return logger.error("Failed to fetch issue operation")
-    if operation.auto_label:
+    if operation.labels:
         return logger.debug("Issue has been labeled")
 
     try:
@@ -50,6 +51,6 @@ async def issue_auto_label(event: Issue.OPENED_EVENT):
         logger.info(f"Add labels: {extract_label.best_labels[:3]} to issue {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
         issue.add_to_labels(*extract_label.best_labels[:3])
-        await operation.update(
-            labels=extract_label.best_labels[:3]
+        await operation.set(
+            {IssueOperation.labels: extract_label.best_labels[:3]}
         )  # noqa

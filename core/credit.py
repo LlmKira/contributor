@@ -14,7 +14,11 @@ from .utils import Card, RepoSetting
 
 class CreditFetcher:
     @staticmethod
-    async def fetch(card_id: str, dashboard_api: str, token_secret: str):
+    async def fetch(
+            card_id: str,
+            dashboard_api: str,
+            token_secret: str
+    ):
         async with aiohttp.ClientSession() as session:
             current_second = str(int(time.time()))
             time_token = hmac.new(token_secret.encode(), current_second.encode(), hashlib.sha256).hexdigest()
@@ -35,7 +39,11 @@ class CreditFetcher:
                     raise Exception(f"Request failed with status: {response.status}")
 
     @staticmethod
-    async def get(repo_setting: RepoSetting, dash_api: str, token_secret: str) -> (Card, OpenAICredential):
+    async def get(
+            repo_setting: RepoSetting,
+            dash_api: str,
+            token_secret: str
+    ) -> (Card, OpenAICredential):
         if not repo_setting.contributor:
             raise Exception("Not Configured")
         try:
@@ -89,7 +97,11 @@ class AIPromptProcessor:
             return None
 
     @staticmethod
-    async def create_issue_report(oai_credential: OpenAICredential, credit_card: Card, docs: List[str] = None):
+    async def create_issue_report(
+            oai_credential: OpenAICredential,
+            credit_card: Card,
+            docs: List[str] = None
+    ):
         try:
             assert docs, "Empty docs"
             report = await OpenAI(

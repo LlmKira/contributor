@@ -57,7 +57,7 @@ class IssueOperation(Document):
     title_format: Optional[str] = None
     body_format: Optional[str] = None
     format_issue: Optional[str] = None
-    auto_label: Optional[List[str]] = None
+    labels: Optional[List[str]] = None
 
 
 load_dotenv()
