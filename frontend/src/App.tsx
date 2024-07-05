@@ -93,12 +93,15 @@ const App: React.FC = () => {
             await apiService.updateUserCard(
                 cardId,
                 card
-            );
+            )
             setEditMode({cardId: "", field: ""});
             setSnackbarMessage('Card updated successfully.');
             setSnackbarOpen(true);
         } catch (err) {
             console.error('Error updating card:', err);
+            setSnackbarMessage('Error updating card.');
+            setSnackbarOpen(true);
+            setEditMode({cardId: "", field: ""});
         }
     };
     useEffect(() => {
