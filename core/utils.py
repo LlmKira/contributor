@@ -7,7 +7,7 @@ from pydantic import BaseModel, model_validator
 
 from .cache import ExpiringDict
 
-setting_cache = ExpiringDict(max_len=100, max_age_seconds=60 * 60 * 12)  # 12 hours
+setting_cache = ExpiringDict(max_len=100, max_age_seconds=60 * 60 * 1)  # 1hours
 
 
 def load_toml_string(toml_str):
@@ -25,12 +25,12 @@ class RepoSetting(BaseModel):
     """
     contributor: Optional[str] = None
     language: str = "Chinese"
-    issue_auto_label: bool = True
-    issue_auto_tidy: bool = False
+    issue_auto_label: bool = False
+    issue_title_format: bool = False
+    issue_body_format: bool = False
+    issue_title_format_prompt: Optional[str] = None
+    issue_body_format_prompt: Optional[str] = None
     issue_close_with_report: bool = False
-    pr_auto_label: bool = False
-    pr_auto_review: bool = False
-    pr_auto_merge: bool = False
 
 
 def get_repo_setting(repo_name: str, repo: Repository) -> RepoSetting:

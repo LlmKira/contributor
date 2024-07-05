@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
+import uuid
 from functools import wraps
 from typing import Callable, Optional
 from typing import Dict, Union
@@ -80,8 +81,8 @@ class GithubWebhookHandler:
             self,
             event_type: Union[BaseEventType, str],
             action: str,
-            unique_id: str,
             handler: Callable,
+            unique_id: str = uuid.uuid4().hex,
             desc: str = "listener",
             filter_func: Optional[Callable[[dict], bool]] = None,
             config: HandlerConfig = HandlerConfig(),

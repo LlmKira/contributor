@@ -41,15 +41,15 @@ such as keys can be configured through my panel.
 
 ## Features
 
-| Feature                     | Description                                                             | Configuration Section     |
-|-----------------------------|-------------------------------------------------------------------------|---------------------------|
-| 🌐 **Dashboard**            | Intuitive web panel for managing sensitive data and key configurations. | -                         |
-| 📂 **Auto Labeling**        | Automatically label issues based on the configuration file.             | `issue_auto_label`        |
-| 📝 **Issue Closed Report**  | Generate a report when an issue is closed.                              | `issue_close_with_report` |
-| 📌 **Issue Title Standard** | Standardize issue titles.                                               | `issue_auto_tidy`         |
-| 🗂 ~~**Issue Summary**~~    | Generate a summary of issues based on the configuration file.           | -                         |
-| 📦 ~~**Release Note**~~     | Generate release notes based on the configuration file.                 | -                         |
-| 📚 ~~**Documentation**~~    | Automatically translate documentation.                                  | -                         |
+| Feature                     | Description                                                             |
+|-----------------------------|-------------------------------------------------------------------------|
+| 🌐 **Dashboard**            | Intuitive web panel for managing sensitive data and key configurations. |
+| 📂 **Auto Labeling**        | Automatically label issues based on the configuration file.             |
+| 📝 **Issue Closed Report**  | Generate a report when an issue is closed.                              |
+| 📌 **Issue Title Standard** | Standardize issue titles.                                               |
+| 🗂 ~~**Issue Summary**~~    | Generate a summary of issues based on the configuration file.           |
+| 📦 ~~**Release Note**~~     | Generate release notes based on the configuration file.                 |
+| 📚 ~~**Documentation**~~    | Automatically translate documentation.                                  |
 
 ```mermaid
 sequenceDiagram

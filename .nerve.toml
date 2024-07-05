@@ -1,9 +1,22 @@
 contributor = "ca8cd6da-b161-46ac-a50c-531319762d8f"
+
 language = "Chinese"
+
+# Whether to automatically label issues
 issue_auto_label = true
-issue_auto_tidy = true
+
+# Whether to automatically label issues
+issue_title_format = true
+
+# Whether to use the default issue title format
+issue_body_format = true
+
+# Whether to use the default issue body format
 issue_close_with_report = true
 
-# pr_auto_label = true
-# pr_auto_review = true
-# pr_auto_merge = true
+# Custom
+# issue_title_format_prompt = """  """
+
+# Custom
+# issue_body_format_prompt = """  """
+
