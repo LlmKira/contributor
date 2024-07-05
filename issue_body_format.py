@@ -82,7 +82,7 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
             f"\n\n----"
             "\n<details>"
             "\n<summary>Summary</summary>"
-            f"\n{better_issue}"
+            f"\n\n{better_issue}"
             "\n</details>"
         )
         issue.edit(
