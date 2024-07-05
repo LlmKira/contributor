@@ -49,7 +49,7 @@ const App: React.FC = () => {
     const [newCard, setNewCard] = useState<CardT>(() => cardSchema.parse({
         cardId: uuidv4(),
         openaiEndpoint: 'https://api.openai.com/v1/',
-        apiModel: '',
+        apiModel: 'gpt-4o',
         apiKey: '',
         repoUrl: 'https://github.com/LlmKira/contributor',
         userId: '',
@@ -64,6 +64,17 @@ const App: React.FC = () => {
             field: ""
         }
     )
+    const resetInput = () => {
+        setNewCard(cardSchema.parse({
+            cardId: uuidv4(),
+            openaiEndpoint: 'https://api.openai.com/v1/',
+            apiModel: 'gpt-4o',
+            apiKey: '',
+            repoUrl: 'https://github.com/LlmKira/contributor',
+            userId: '',
+            disabled: false,
+        }));
+    }
     const handleDoubleClick = (cardId: any, field: string) => {
         setEditMode({cardId, field});
     };
@@ -142,6 +153,11 @@ const App: React.FC = () => {
         } else {
             newCard.repoUrl = repoUrl;
         }
+        if (!newCard.apiKey || !newCard.apiModel || !newCard.openaiEndpoint || !newCard.repoUrl) {
+            setSnackbarMessage('Please fill in all fields.');
+            setSnackbarOpen(true);
+            return;
+        }
         try {
             if (!user?.uid) {
                 console.error('No user found.');
@@ -153,15 +169,7 @@ const App: React.FC = () => {
             const createdCard = await apiService.createUserCard(validCard, user.uid);
             setCards([...cards, createdCard]);
             // Reset new card state
-            setNewCard(cardSchema.parse({
-                cardId: uuidv4(),
-                openaiEndpoint: 'https://api.openai.com/v1/',
-                apiModel: '',
-                apiKey: '',
-                repoUrl: 'https://github.com/LlmKira/contributor',
-                userId: user.uid,
-                disabled: false,
-            }));
+            resetInput();
             setSnackbarMessage('Card added successfully.');
             setSnackbarOpen(true);
         } catch (error) {
