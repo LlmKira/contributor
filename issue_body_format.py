@@ -78,8 +78,14 @@ async def issue_body_format(event: Issue.OPENED_EVENT):
     if better_issue:
         logger.info(f"Update issue body to {event.issue.html_url}")
         issue = event.get_issue(integration=git_integration)
+        edited_body = (f"{issue.body}"
+                       f"\n----"
+                       "\n<details>"
+                       "\n<summary>Summary</summary>"
+                       "\n</details>"
+                       )
         issue.edit(
-            body=better_issue
+            body=edited_body
         )
         operation.body_format = better_issue
         await global_client.save(operation)
