@@ -46,7 +46,7 @@ async def fetch_credit(card_id):
                 raise Exception(f"Invalid timeToken {card_id}")
             elif response.status == 404:
                 logger.warning(f"Card or User not found {card_id}")
-                return None
+                raise Exception(f"Card or User not found {card_id}")
             else:
                 raise Exception(f"Request failed with status: {response.status}")
 
