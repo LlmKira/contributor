@@ -1,22 +1,23 @@
 contributor = "ca8cd6da-b161-46ac-a50c-531319762d8f"
+# go dashboard to get your uuid
 
 language = "Chinese"
+# The language of bot used
 
-# Whether to automatically label issues
 issue_auto_label = true
-
 # Whether to automatically label issues
+
 issue_title_format = true
-
 # Whether to use the default issue title format
+
 issue_body_format = true
-
 # Whether to use the default issue body format
+
 issue_close_with_report = true
+# Whether to close the issue with a report
 
-# Custom
 # issue_title_format_prompt = """  """
-
 # Custom
-# issue_body_format_prompt = """  """
 
+# issue_body_format_prompt = """  """
+# Custom
