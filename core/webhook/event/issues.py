@@ -35,7 +35,7 @@ class Issue(BaseIssue):
     """
     body: str | None
     """The body of the issue."""
-    closed_at: str | None
+    closed_at: datetime.datetime | None
     comments: int
     comments_url: str
     created_at: datetime.datetime
