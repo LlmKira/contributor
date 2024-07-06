@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "contributor-backend",
-      "script": "bun install && bun run start:backend",
+      "script": "sleep 1 && bun install && bun run start:backend",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,
@@ -24,7 +24,7 @@
     },
     {
       "name": "smee_proxy",
-      "script": "bun install && bun run start:webhook",
+      "script": "sleep 1 && bun install && bun run start:webhook",
       "instances": 1,
       "max_restarts": 3,
       "restart_delay": 10000,
