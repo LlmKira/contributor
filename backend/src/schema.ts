@@ -22,8 +22,8 @@ interface IUser extends Document, UserT {
 const UserSchema: Schema = new Schema({
     uid: {type: String, required: true, unique: true},
     name: {type: String, required: true},
-    login: {type: String, required: true},
     accessToken: {type: String, required: true},
+    email: {type: String},
     avatarUrl: {type: String},
     sourcePlatform: {type: String},
 });

@@ -1,28 +1,61 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import session from 'express-session';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import {Card, User} from "./schema.ts";
+import cookieParser from "cookie-parser";
+
 // import {rateLimit} from 'express-rate-limit';
 import path from 'path';
-import {cardSchema, Platform, userSchema} from "@shared/schema.ts";
+import {cardSchema, Platform, publicUserSchema} from "@shared/schema.ts";
 import {z} from "zod";
+import type {CustomJwtPayload} from "./express";
+import session from "express-session";
+
+const checkEnvVariables = (envVariables: string[]) => {
+    const missingEnvVariables = envVariables.filter((envVariable) => !process.env[envVariable]);
+    if (missingEnvVariables.length > 0) {
+        console.error('Missing environment variables:', missingEnvVariables);
+        process.exit(1);
+    }
+};
 
 dotenv.config({path: path.resolve(__dirname, '../.env')});  // 确保正确读取.env文件
+
+// Check required environment variables
+checkEnvVariables([
+    'GITHUB_CLIENT_ID',
+    'GITHUB_CLIENT_SECRET',
+    'OHMYGPT_CLIENT_ID',
+    'OHMYGPT_CLIENT_SECRET',
+    'GITHUB_CALLBACK_URL',
+    'OHMYGPT_CALLBACK_URL',
+    'MONGODB_URI',
+    'CORS_ORIGIN',
+    'TOKEN_SECRET',
+    'JWT_SECRET'
+]);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
-const CALLBACK_URL = process.env.CALLBACK_URL!;
-const SESSION_SECRET = process.env.SESSION_SECRET!;
+
+const OHMYGPT_CLIENT_ID = process.env.OHMYGPT_CLIENT_ID!;
+const OHMYGPT_CLIENT_SECRET = process.env.OHMYGPT_CLIENT_SECRET!;
+
+const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL!;
+const OHMYGPT_CALLBACK_URL = process.env.OHMYGPT_CALLBACK_URL!;
 const MONGODB_URI = process.env.MONGODB_URI!;
 const CORS_ORIGIN = process.env.CORS_ORIGIN!;
 const TOKEN_SECRET: string = process.env.TOKEN_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'a_exp_jwt_secret';
+const SESSION_SECRET = process.env.SESSION || 'a_exp_session_secret';
+const TOKEN_EXPIRATION = '7d'; // 1 week
 
 mongoose.connect(MONGODB_URI, {
     dbName: 'github-cards',
@@ -48,165 +81,211 @@ const getAvatarUrl = (provider: string, providerUserId: string): string => {
     }
 
 }
+
+app.use(cookieParser());
+// Session middleware setup
+app.use(session({
+    secret: SESSION_SECRET, // Change this to a secure secret key
+    resave: false,
+    saveUninitialized: true,
+    cookie: {secure: process.env.NODE_ENV === 'production'}
+}));
+
 app.use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
 }));
 
+
 app.use(bodyParser.json());
 
-/*
-app.use(rateLimit(
-    {
-        windowMs: 60 * 1000, // 1 minute
-        limit: 100,
-        // limit each IP to 100 requests per windowMs
-        keyGenerator: (req): string => {
-            // Check for the CF-Connecting-IP header first to use the original
-            // client IP address when the request comes through Cloudflare
-            const ip = req.headers['cf-connecting-ip'] || req.ip;
-            if (Array.isArray(ip)) {
-                return ip[0];
+const authenticateJWT = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const token = req.header('Authorization')?.split(' ')[1] || req.cookies.jwt as string;
+    if (token) {
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.status(403).send('Invalid token');
             }
-            // @ts-ignore
-            return ip;
-        }
-    }
-));
-
-*/
-
-
-app.use(session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {secure: false},
-}));
-
-app.use(async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const user = await User.findOne({accessToken: token}).exec();
-            if (user) {
-                // @ts-ignore
-                req.user = user;
-                next();
-            } else {
-                res.status(401).send('Invalid token');
+            // 检查是否有 userId 属性
+            if (typeof user !== 'object' || !('userId' in user)) {
+                return res.status(403).send('Invalid token instance');
             }
-        } catch (err) {
-            console.error('Failed to authenticate:', err);
-            res.status(500).send('Failed to authenticate');
-        }
+            req.user = user as CustomJwtPayload;
+            next();
+        });
     } else {
-        next();
+        res.status(401).send('Unauthorized');
     }
-});
+};
 
 app.get('/auth/github', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex');
     req.session.csrfString = state;
-    const redirectUri = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${CALLBACK_URL}&state=${state}`;
+    const redirectUri = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${GITHUB_CALLBACK_URL}&state=${state}`;
     res.redirect(redirectUri);
 });
 
-app.get('/auth/github/callback', async (req, res) => {
-    const {code, state} = req.query;
+app.get('/auth/ohmygpt', (req, res) => {
+    const state = crypto.randomBytes(16).toString('hex');
+    req.session.csrfString = state;
+    const redirectUri = `https://next.ohmygpt.com/next/v1/oauth?response_type=code&client_id=${OHMYGPT_CLIENT_ID}&redirect_uri=${OHMYGPT_CALLBACK_URL}&scope=general_api_access&state=${state}`;
+    res.redirect(redirectUri);
+});
+
+const handleOAuthCallback = async (
+    req: express.Request,
+    res: express.Response,
+    service: {
+        name: string,
+        clientId: string,
+        clientSecret: string,
+        platform: Platform,
+        getTokenResponseData: (data: any) => { accessToken: string },
+        parseUser: (data: any) => {
+            id: string,
+            name: string,
+            email: string
+        }
+    },
+    getTokenUrl: string,
+    getUserUrl: { url: string, method: string },
+    createUserId: (provider: string, providerUserId: string) => string) => {
+    const {code, state, error, error_description} = req.query;
+    if (error) {
+        console.error(`Error during ${service.name} OAuth callback:`, error);
+        res.status(500).send(`Error during ${service.name} OAuth callback: ${error_description}`);
+        return;
+    }
     if (state === req.session.csrfString) {
         try {
-            const tokenResponse = await axios.post('https://github.com/login/oauth/access_token', {
-                client_id: GITHUB_CLIENT_ID,
-                client_secret: GITHUB_CLIENT_SECRET,
+            const tokenResponse = await axios.post(getTokenUrl, {
+                client_id: service.clientId,
+                client_secret: service.clientSecret,
                 code,
                 state,
             }, {
                 headers: {accept: 'application/json'}
             });
+            const {accessToken} = service.getTokenResponseData(tokenResponse.data);
+            if (!accessToken) {
+                console.error(`Failed to get access token from ${service.name} OAuth callback:`, tokenResponse.data);
+                res.status(500).send('Failed to get access token');
+                return;
+            }
+            // 根据 userMethod 的值进行决定是 post 还是 get 请求
+            let userResponse;
+            if (getUserUrl.method === 'POST') {
+                userResponse = await axios.post(getUserUrl.url, {}, {headers: {Authorization: `Bearer ${accessToken}`}});
+            } else {
+                userResponse = await axios.get(getUserUrl.url, {headers: {Authorization: `Bearer ${accessToken}`}});
+            }
+            const userData = service.parseUser(userResponse.data);
+            const userId = createUserId(service.platform, userData.id);
 
-            const accessToken = tokenResponse.data.access_token;
-            const userResponse = await axios.get('https://api.github.com/user', {headers: {Authorization: `Bearer ${accessToken}`}});
-            const {id, name, login} = userResponse.data;
-            const userId = createUserId(Platform.GitHub, id);
             let user = await User.findOne({uid: userId}).exec();
             if (!user) {
-                user = new User(
-                    {
-                        uid: userId,
-                        name: name,
-                        login: login,
-                        accessToken: accessToken,
-                        avatarUrl: getAvatarUrl(Platform.GitHub, id),
-                        sourcePlatform: Platform.GitHub,
-                    }
-                );
+                user = new User({
+                    uid: userId,
+                    name: userData.name,
+                    accessToken: accessToken,
+                    email: userData.email,
+                    sourcePlatform: service.platform,
+                    avatarUrl: getAvatarUrl(service.platform, userData.id)
+                });
                 await user.save();
             } else {
+                Object.assign(user, userData);
+                user.avatarUrl = getAvatarUrl(service.platform, userData.id);
                 user.accessToken = accessToken;
-                user.avatarUrl = getAvatarUrl(Platform.GitHub, id);
+                user.name = userData.name;
+                user.email = userData.email;
                 await user.save();
             }
-            req.session.accessToken = accessToken;
-            req.session.userId = user.uid;
+
+            const jwtToken = jwt.sign({userId: user.uid}, JWT_SECRET, {expiresIn: TOKEN_EXPIRATION});
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+            });
             res.redirect(CORS_ORIGIN);
         } catch (err) {
-            console.error('Error during GitHub OAuth callback:', err);
-            res.status(500).send('Authentication failed');
+            console.error(`Error during ${service.name} OAuth callback:`, err);
+            res.status(500).send('Oauth Authentication failed');
         }
     } else {
-        console.error('CSRF token mismatch during GitHub OAuth callback.');
+        console.error(`CSRF token mismatch during ${service.name} OAuth callback.`);
         res.status(401).send('CSRF token mismatch');
     }
-});
+};
 
-app.get('/user', async (req, res) => {
-    if (req.session.accessToken) {
-        try {
-            const user = await User.findOne({uid: req.session.userId}).exec();
-            res.json(
-                userSchema.parse(user)
-            );
-        } catch (err) {
-            console.error('Failed to fetch user:', err);
-            res.status(500).send('Failed to fetch user');
-        }
-    } else {
-        res.status(401).send('Unauthorized');
+app.get('/auth/github/callback', (req, res) => handleOAuthCallback(req, res,
+    {
+        name: 'GitHub',
+        clientId: GITHUB_CLIENT_ID,
+        clientSecret: GITHUB_CLIENT_SECRET,
+        platform: Platform.GitHub,
+        getTokenResponseData: data => ({accessToken: data.access_token}),
+        parseUser: data => ({
+            id: data.id,
+            name: data.name,
+            email: data.email,
+        })
+    },
+    'https://github.com/login/oauth/access_token',
+    {method: "GET", url: "https://api.github.com/user"},
+    createUserId
+));
+
+app.get('/auth/ohmygpt/callback', (req, res) => handleOAuthCallback(req, res, {
+        name: 'OhMyGPT',
+        clientId: OHMYGPT_CLIENT_ID,
+        clientSecret: OHMYGPT_CLIENT_SECRET,
+        platform: Platform.OhMyGPT,
+        getTokenResponseData: data => ({accessToken: data.data.token}),
+        parseUser: data => ({
+            id: data.data.user_id,
+            name: data.data.userEmail.split('@')[0],
+            email: data.data.userEmail,
+        })
+    },
+    'https://cn2us02.opapi.win/api/v1/user/oauth/issue-token',
+    {url: 'https://cn2us02.opapi.win/api/v1/user/oauth/app/query-user-basic-info', method: 'POST'},
+    createUserId
+));
+
+app.get('/user', authenticateJWT, async (req, res) => {
+    try {
+        const user = await User.findOne({uid: req.user?.userId}).exec();
+        res.json(publicUserSchema.parse(user));
+    } catch (err) {
+        console.error('Failed to fetch user:', err);
+        res.status(500).send('Failed to fetch user');
     }
 });
 
-app.post('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            res.status(500).send('Failed to logout');
-        } else {
-            res.clearCookie('connect.sid');
-            res.send('Logged out');
-        }
-    });
+app.post('/logout', (_req, res) => {
+    res.clearCookie('jwt');
+    res.send('Logged out');
 });
 
-app.get('/cards', async (req, res) => {
+app.get('/auth/check', authenticateJWT, (_req, res) => {
+    res.status(200).send('User is logged in');
+});
+
+app.get('/cards', authenticateJWT, async (req, res) => {
     try {
         const {userId} = req.query;
         const cards = await Card.find({userId}).exec();
-        res.json(
-            z.array(cardSchema).parse(cards)
-        )
+        res.json(z.array(cardSchema).parse(cards));
     } catch (err) {
         console.error('Failed to fetch cards:', err);
         res.status(500).send('Failed to fetch cards');
     }
 });
 
-app.post('/cards', async (req, res) => {
+app.post('/cards', authenticateJWT, async (req, res) => {
     try {
-        if (!req.user) {
-            res.status(401).send('Unauthorized');
-            return;
-        }
         const requestCard = cardSchema.safeParse(req.body);
         if (!requestCard.success) {
             res.status(400).send('Invalid card data');
@@ -214,25 +293,19 @@ app.post('/cards', async (req, res) => {
         }
         const card = new Card({
             ...requestCard.data,
-            userId: req.user.uid,
+            userId: req.user?.userId,
         });
         await card.save();
-        res.json(
-            cardSchema.parse(card)
-        );
+        res.json(cardSchema.parse(card));
     } catch (err) {
         console.error('Failed to add card:', err);
         res.status(500).send('Failed to add card');
     }
 });
 
-app.put('/cards/:id', async (req, res) => {
+app.put('/cards/:id', authenticateJWT, async (req, res) => {
     try {
         const {id} = req.params;
-        if (!req.user) {
-            res.status(401).send('Unauthorized');
-            return;
-        }
         const requestCard = cardSchema.safeParse(req.body);
         if (!requestCard.success) {
             res.status(400).send('Invalid card data');
@@ -240,14 +313,12 @@ app.put('/cards/:id', async (req, res) => {
         }
         const card = await Card.findOneAndUpdate({
             cardId: id,
-            userId: req.user.uid
+            userId: req.user?.userId,
         }, requestCard.data, {new: true}).exec();
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json(
-                cardSchema.parse(card)
-            )
+            res.json(cardSchema.parse(card));
         }
     } catch (err) {
         console.error('Failed to update card:', err);
@@ -255,14 +326,10 @@ app.put('/cards/:id', async (req, res) => {
     }
 });
 
-app.delete('/cards/:id', async (req, res) => {
+app.delete('/cards/:id', authenticateJWT, async (req, res) => {
     try {
         const {id} = req.params;
-        if (!req.user) {
-            res.status(401).send('Unauthorized');
-            return;
-        }
-        const result = await Card.deleteOne({cardId: id, userId: req.user.uid});
+        const result = await Card.deleteOne({cardId: id, userId: req.user?.userId});
         if (result.deletedCount === 0) {
             res.status(404).send('Card not found');
         } else {
@@ -275,7 +342,6 @@ app.delete('/cards/:id', async (req, res) => {
 });
 
 app.get('/internal/cards/:cardId', async (req, res) => {
-    // 不需要验证用户的 user 字段
     try {
         const {cardId} = req.params;
         const timeToken = req.query.timeToken as string;
@@ -283,7 +349,6 @@ app.get('/internal/cards/:cardId', async (req, res) => {
             res.status(400).send('Missing timeToken');
             return;
         }
-        // 时间戳
         const currentSecond = Math.floor(Date.now() / 1000).toString();
         const expectedTimeToken = crypto.createHmac('sha256', TOKEN_SECRET)
             .update(currentSecond)
@@ -297,12 +362,10 @@ app.get('/internal/cards/:cardId', async (req, res) => {
         if (!card) {
             res.status(404).send('Card not found');
         } else {
-            res.json(
-                cardSchema.parse(card)
-            );
+            res.json(cardSchema.parse(card));
         }
     } catch (err) {
-        console.error('Failed to fetch user info:', err);
+        console.error('Failed to fetch card info:', err);
         res.status(500).send('Request failed');
     }
 });

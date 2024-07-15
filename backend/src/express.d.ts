@@ -1,11 +1,13 @@
-// express.d.ts
+import {JwtPayload} from "jsonwebtoken";
 
-import type {UserT} from "@shared/schema.ts";
+interface CustomJwtPayload extends JwtPayload {
+    userId: string;
+}
 
 declare global {
     namespace Express {
         interface Request {
-            user?: UserT;  // 确保 user 是可选的
+            user?: CustomJwtPayload;
         }
     }
 }
