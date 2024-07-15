@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Button,
@@ -7,11 +7,12 @@ import {
     MenuItem,
     TextField,
     Typography,
+    InputLabel,
+    FormControl,
+    Paper,
     type SelectChangeEvent,
-    Card,
-    CardContent
 } from '@mui/material';
-import {keyframes} from "@emotion/react";
+import { keyframes } from '@emotion/react';
 
 interface OhMyGptFormProps {
     onSubmit: (data: any) => void;
@@ -28,7 +29,7 @@ const fadeIn = keyframes`
     }
 `;
 
-const OhMyGptForm: React.FC<OhMyGptFormProps> = ({onSubmit}) => {
+const OhMyGptForm: React.FC<OhMyGptFormProps> = ({ onSubmit }) => {
     const initialFormData = {
         apiModel: '',
         repoUrl: '',
@@ -38,7 +39,7 @@ const OhMyGptForm: React.FC<OhMyGptFormProps> = ({onSubmit}) => {
 
     const handleChange = (e: SelectChangeEvent) => {
         const name = e.target.name as string;
-        setFormData({...formData, [name]: e.target.value});
+        setFormData({ ...formData, [name]: e.target.value });
     };
 
     const handleSubmit = () => {
@@ -46,50 +47,47 @@ const OhMyGptForm: React.FC<OhMyGptFormProps> = ({onSubmit}) => {
         setFormData(initialFormData); // Reset the form
     };
 
-    const modelOptions = [
-        'gpt-4',
-        'gpt-4o',
-    ];
+    const modelOptions = ['gpt-4', 'gpt-4o'];
 
     return (
-        <Card variant="outlined" sx={{
-            mb: 4,
-            boxShadow: 3,
-            transition: 'box-shadow 0.3s, transform 0.3s',
-            '&:hover': {boxShadow: 6, transform: 'translateY(-5px)'}
-        }}>
-            <CardContent sx={{animation: `${fadeIn} 0.5s`}}>
-                <Typography variant="h5">Create Card</Typography>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            label="Repository URL"
-                            name="repoUrl"
-                            placeholder="https://github.com/username/repository"
-                            fullWidth
-                            margin="normal"
-                            value={formData.repoUrl}
-                            onChange={(e) => setFormData({...formData, repoUrl: e.target.value})}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
+        <Paper elevation={3} sx={{ p: 2, mb: 4, animation: `${fadeIn} 0.5s` }}>
+            <Typography variant="h5" gutterBottom>
+                Create Card
+            </Typography>
+            <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                    <TextField
+                        label="Repository URL"
+                        name="repoUrl"
+                        placeholder="https://github.com/username/repository"
+                        fullWidth
+                        margin="normal"
+                        value={formData.repoUrl}
+                        onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Model</InputLabel>
                         <Select
-                            label="Model"
                             name="apiModel"
-                            fullWidth
                             value={formData.apiModel}
-                            color={"primary"}
                             onChange={handleChange}
+                            label="Model"
                         >
                             {modelOptions.map((model, idx) => (
-                                <MenuItem key={idx} value={model}>{model}</MenuItem>
+                                <MenuItem key={idx} value={model}>
+                                    {model}
+                                </MenuItem>
                             ))}
                         </Select>
-                    </Grid>
+                    </FormControl>
                 </Grid>
-                <Button variant="contained" color="primary" sx={{mt: 2}} onClick={handleSubmit}>Add Card</Button>
-            </CardContent>
-        </Card>
+            </Grid>
+            <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleSubmit}>
+                Add Card
+            </Button>
+        </Paper>
     );
 };
 
