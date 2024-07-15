@@ -26,16 +26,6 @@ export default defineConfig({
     server: {
         port: 3000,
         proxy: {
-            '/auth': {
-                target: process.env.VITE_BACKEND_URL,
-                changeOrigin: true,
-                secure: false,
-            },
-            '/user': {
-                target: process.env.VITE_BACKEND_URL,
-                changeOrigin: true,
-                secure: false,
-            }
         }
     }
 })
