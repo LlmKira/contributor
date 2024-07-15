@@ -7,33 +7,23 @@ import {
     Card,
     CardContent,
     Container,
-    Grid,
     Snackbar,
-    TextField,
     Typography,
 } from '@mui/material';
-
-import {v4 as uuidv4} from 'uuid';
 import {keyframes} from '@emotion/react';
-import GithubLogin, {handleGithubLogin} from "./components/GithubLogin.tsx";
-import CardComponent from './components/CardComponent';
+import ShownCard from './components/ShownCard.tsx';
+import OAuthLogin from "./components/OAuth";
 import ApiService from './services/ApiService';
-import {cardSchema, type CardT, type UserT} from "@shared/schema.ts";
-import {z} from "zod";
-import {extractGitHubRepoUrl} from "@shared/validate.ts";
+import useAuth from './hook/useAuth.tsx';
 
-const apiService = new ApiService(import.meta.env.VITE_BACKEND_URL, localStorage);
+import {cardSchema, type CardT, Platform, type PublicUserT} from '@shared/schema.ts';
+import {z} from 'zod';
+import {extractGitHubRepoUrl} from '@shared/validate.ts';
+import GitHubForm from "./components/GitHubForm.tsx";
+import OhMyGptForm from "./components/OhMyGptForm.tsx";
 
-const fadeIn = keyframes`
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-`;
+const apiService = new ApiService(import.meta.env.VITE_BACKEND_URL);
+
 
 interface EditState {
     cardId: string;
@@ -41,37 +31,15 @@ interface EditState {
 }
 
 const App: React.FC = () => {
-    const [user, setUser] = useState<UserT | null>(null);
+    const [user, setUser] = useState<PublicUserT | null>(null);
+    const [snackbar, setSnackbar] = useState({open: false, message: ''});
     const [cards, setCards] = useState<CardT[]>([]);
-    const [newCard, setNewCard] = useState<CardT>(
-        () => cardSchema.parse({
-            cardId: uuidv4(),
-            openaiEndpoint: 'https://api.openai.com/v1/',
-            apiModel: 'gpt-4o',
-            apiKey: '',
-            repoUrl: 'https://github.com/LlmKira/contributor',
-            userId: '',
-            disabled: false,
-        })
-    );
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: ''
-    });
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-    const [editMode, setEditMode] = useState<EditState>({cardId: "", field: ""});
 
-    const resetInput = useCallback(() => {
-        setNewCard(cardSchema.parse({
-            cardId: uuidv4(),
-            openaiEndpoint: 'https://api.openai.com/v1/',
-            apiModel: 'gpt-4o',
-            apiKey: '',
-            repoUrl: 'https://github.com/LlmKira/contributor',
-            userId: '',
-            disabled: false,
-        }));
-    }, []);
+    const [editMode, setEditMode] = useState<EditState>({cardId: "", field: ""});
+    const [loading, setLoading] = useState<boolean>(true);
+    const isLoggedIn = useAuth(import.meta.env.VITE_BACKEND_URL);
+    const [platform, setPlatform] = useState<Platform | null>(null);
 
     const handleDoubleClick = useCallback((cardId: string, field: string) => {
         setEditMode({cardId, field});
@@ -98,15 +66,21 @@ const App: React.FC = () => {
     }, [cards]);
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const fetchedUser = await apiService.fetchUser();
-            setUser(fetchedUser);
-            const userCards = await apiService.fetchUserCards(fetchedUser.uid);
-            setCards(userCards);
+        const fetchUserAndCards = async () => {
+            try {
+                setLoading(true);
+                const fetchedUser = await apiService.fetchUser();
+                setUser(fetchedUser);
+                const userCards = await apiService.fetchUserCards(fetchedUser.uid);
+                setCards(userCards);
+                setPlatform(fetchedUser.sourcePlatform || null);
+            } catch (err) {
+                console.error('Error fetching user and cards:', err);
+            } finally {
+                setLoading(false);
+            }
         };
-        fetchUser().catch(
-            (err) => console.error('Error fetching user:', err)
-        );
+        fetchUserAndCards();
     }, []);
 
     useEffect(() => {
@@ -128,30 +102,21 @@ const App: React.FC = () => {
             console.error('Error during logout:', err);
         }
     }, []);
-
-    const handleAddCard = async () => {
-        const repoUrl = extractGitHubRepoUrl(newCard.repoUrl);
-        if (!repoUrl) {
-            setSnackbar({open: true, message: 'Invalid GitHub repository URL.'});
-            return;
-        }
-        setNewCard({...newCard, repoUrl});
-
-        if (!newCard.apiKey || !newCard.apiModel || !newCard.openaiEndpoint || !newCard.repoUrl) {
-            setSnackbar({open: true, message: 'Please fill in all fields.'});
-            return;
-        }
-
+    const handleFormSubmit = async (formData: any) => {
         try {
+            const newCard = cardSchema.parse(formData);
+            const repoUrl = extractGitHubRepoUrl(newCard.repoUrl);
+            if (!repoUrl) {
+                setSnackbar({open: true, message: 'Invalid GitHub repository URL.'});
+                return;
+            }
+            newCard.repoUrl = repoUrl;
             if (!user?.uid) {
                 console.error('No user found.');
                 return;
             }
-
-            const validCard = cardSchema.parse({...newCard, userId: user.uid});
-            const createdCard = await apiService.createUserCard(validCard, user.uid);
+            const createdCard = await apiService.createUserCard(newCard, user.uid);
             setCards([...cards, createdCard]);
-            resetInput();
             setSnackbar({open: true, message: 'Card added successfully.'});
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -160,8 +125,8 @@ const App: React.FC = () => {
                     message: 'Validation Error: ' + error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
                 });
             } else {
-                console.error('Error adding card:', error);
-                setSnackbar({open: true, message: 'Error adding card.'});
+                console.error('Error submitting form:', error);
+                setSnackbar({open: true, message: 'Failed to submit form'});
             }
         }
     };
@@ -202,6 +167,35 @@ const App: React.FC = () => {
         setSnackbar({...snackbar, open: false});
     }, [snackbar]);
 
+    const renderCardForm = () => {
+        switch (platform) {
+            case Platform.GitHub:
+                return <GitHubForm onSubmit={handleFormSubmit}/>;
+            case Platform.OhMyGPT:
+                return <OhMyGptForm onSubmit={handleFormSubmit}/>;
+            default:
+                return null;
+        }
+    };
+
+    if (loading) {
+        return (
+            <Container>
+                <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+                    <Typography variant="h4">Loading...</Typography>
+                </Box>
+            </Container>
+        );
+    }
+
+    if (!user || !isLoggedIn) {
+        return (
+            <Container>
+                <OAuthLogin/>
+            </Container>
+        );
+    }
+
     return (
         <Container>
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
@@ -210,83 +204,34 @@ const App: React.FC = () => {
                 </Alert>
             </Snackbar>
 
-            {!user ? (
-                <GithubLogin onLogin={handleGithubLogin} storage={localStorage}/>
-            ) : (
-                <Box sx={{my: 4}}>
-                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
-                        <Box sx={{display: 'flex', alignItems: 'center'}}>
-                            <Avatar src={user.avatarUrl} alt={user.name} sx={{mr: 2}}/>
-                            <Typography variant="h6">{user.name}</Typography>
-                        </Box>
-                        <Button variant="contained" onClick={handleLogout}>Logout</Button>
+            <Box sx={{my: 4}}>
+                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4}}>
+                    <Box sx={{display: 'flex', alignItems: 'center'}}>
+                        <Avatar src={user.avatarUrl} alt={user.name} sx={{mr: 2}}/>
+                        <Typography variant="h6">{user.name}</Typography>
                     </Box>
-
-                    <Card variant="outlined" sx={{
-                        mb: 4,
-                        boxShadow: 3,
-                        transition: 'box-shadow 0.3s, transform 0.3s',
-                        animation: `${fadeIn} 0.5s`
-                    }}>
-                        <CardContent>
-                            <Typography variant="h5">Create Token</Typography>
-                            <Grid container spacing={2}>
-                                {[
-                                    {
-                                        label: "OpenAI Endpoint",
-                                        placeholder: "https://api.openai.com/v1/",
-                                        value: newCard.openaiEndpoint,
-                                        field: 'openaiEndpoint'
-                                    },
-                                    {label: "Model", placeholder: "gpt-4", value: newCard.apiModel, field: 'apiModel'},
-                                    {
-                                        label: "API Key",
-                                        placeholder: "sk-123...",
-                                        value: newCard.apiKey,
-                                        field: 'apiKey'
-                                    },
-                                    {
-                                        label: "Repository URL",
-                                        placeholder: "https://github.com/username/repository",
-                                        value: newCard.repoUrl,
-                                        field: 'repoUrl'
-                                    },
-                                ].map(({label, placeholder, value, field}, index) => (
-                                    <Grid item xs={12} sm={6} key={index}>
-                                        <TextField
-                                            label={label}
-                                            placeholder={placeholder}
-                                            fullWidth
-                                            margin="normal"
-                                            value={value}
-                                            onChange={(e) => setNewCard({...newCard, [field]: e.target.value})}
-                                        />
-                                    </Grid>
-                                ))}
-                            </Grid>
-                            <Button variant="contained" color="primary" sx={{mt: 2}} onClick={handleAddCard}>Add
-                                Card</Button>
-                        </CardContent>
-                    </Card>
-
-                    <Box>
-                        {cards.map((card, index) => (
-                            <CardComponent
-                                key={card.cardId}
-                                card={card}
-                                editMode={editMode}
-                                confirmDelete={confirmDelete}
-                                handleChange={handleChange}
-                                showCaption={index === 0}
-                                handleSave={handleSave}
-                                handleDoubleClick={handleDoubleClick}
-                                handleDeleteCard={handleDeleteCard}
-                                handleToggleCard={handleToggleCard}
-                            />
-                        ))}
-                    </Box>
+                    <Button variant="contained" onClick={handleLogout}>Logout</Button>
                 </Box>
-            )}
+                <Box>
+                    {platform ? renderCardForm() : <Typography>No supported platform found.</Typography>}
+                </Box>
+                <Box>
+                    {cards.map((card, index) => (
+                        <ShownCard
+                            key={card.cardId}
+                            card={card}
+                            editMode={editMode}
+                            confirmDelete={confirmDelete}
+                            handleChange={handleChange}
+                            showCaption={index === 0}
+                            handleSave={handleSave}
+                            handleDoubleClick={handleDoubleClick}
+                            handleDeleteCard={handleDeleteCard}
+                            handleToggleCard={handleToggleCard}
+                        />
+                    ))}
+                </Box>
+            </Box>
         </Container>
     );
 };

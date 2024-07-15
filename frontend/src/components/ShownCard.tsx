@@ -80,7 +80,7 @@ const obscureApiKey = (apiKey: string): string => {
 };
 
 
-const CardComponent: React.FC<CardComponentProps> = (
+const ShownCard: React.FC<CardComponentProps> = (
     {
         card,
         editMode,
@@ -288,5 +288,5 @@ const CardComponent: React.FC<CardComponentProps> = (
     );
 };
 
-export default CardComponent;
+export default ShownCard;
 

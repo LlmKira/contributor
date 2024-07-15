@@ -4,6 +4,7 @@ import {v4 as uuidv4} from "uuid";
 // 定义来源平台枚举
 export enum Platform {
     GitHub = "github",
+    OhMyGPT = "ohmygpt",
 }
 
 // 自定义校验函数，用于检查 repoUrl 是否是一个有效的 GitHub 仓库地址
@@ -31,10 +32,13 @@ export type CardT = z.infer<typeof cardSchema>;
 export const userSchema = z.object({
     uid: z.string().max(100),
     name: z.string().max(100),
-    login: z.string(),
+    email: z.string(),
     accessToken: z.string(),
     avatarUrl: z.string().optional().default('https://avatars.githubusercontent.com/in/907205'),
     sourcePlatform: z.nativeEnum(Platform).optional(),
 });
+// 定义去掉 accessToken 的 schema
+export const publicUserSchema = userSchema.omit({accessToken: true});
 
 export type UserT = z.infer<typeof userSchema>;
+export type PublicUserT = z.infer<typeof publicUserSchema>;
