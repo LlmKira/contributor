@@ -31,47 +31,59 @@ const OhMyGptForm: React.FC<OhMyGptFormProps> = ({onSubmit}) => {
         apiKey: '',
         repoUrl: '',
     };
+
     const [formData, setFormData] = useState(initialFormData);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({...formData, [e.target.name]: e.target.value});
     };
+
     const handleSubmit = () => {
         onSubmit(formData);
         setFormData(initialFormData); // Reset the form
     };
+
     return (
-        <Card variant="outlined" sx={{
-            mb: 4,
-            boxShadow: 3,
-            transition: 'box-shadow 0.3s, transform 0.3s',
-            '&:hover': {boxShadow: 6, transform: 'translateY(-5px)'}
-        }}>
+        <Card
+            variant="outlined"
+            sx={{
+                mb: 2,
+                boxShadow: 3,
+                transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
+                opacity: 1,
+                '&:hover': {
+                    transform: 'scale(1.005)',
+                },
+            }}
+        >
             <CardContent sx={{animation: `${fadeIn} 0.5s`}}>
-                <Typography variant="h5">Create Card</Typography>
+                <Typography variant="h5" gutterBottom>
+                    Create Card
+                </Typography>
                 <Grid container spacing={2}>
                     {[
                         {
-                            label: "OpenAI Endpoint",
-                            name: "openaiEndpoint",
-                            placeholder: "https://api.openai.com/v1/",
+                            label: 'OpenAI Endpoint',
+                            name: 'openaiEndpoint',
+                            placeholder: 'https://api.openai.com/v1/',
                             value: formData.openaiEndpoint,
                         },
                         {
-                            label: "Model",
-                            name: "apiModel",
-                            placeholder: "gpt-4",
+                            label: 'Model',
+                            name: 'apiModel',
+                            placeholder: 'gpt-4',
                             value: formData.apiModel,
                         },
                         {
-                            label: "API Key",
-                            name: "apiKey",
-                            placeholder: "sk-123...",
+                            label: 'API Key',
+                            name: 'apiKey',
+                            placeholder: 'sk-123...',
                             value: formData.apiKey,
                         },
                         {
-                            label: "Repository URL",
-                            name: "repoUrl",
-                            placeholder: "https://github.com/username/repository",
+                            label: 'Repository URL',
+                            name: 'repoUrl',
+                            placeholder: 'https://github.com/username/repository',
                             value: formData.repoUrl,
                         },
                     ].map((field, index) => (
@@ -84,14 +96,22 @@ const OhMyGptForm: React.FC<OhMyGptFormProps> = ({onSubmit}) => {
                                 margin="normal"
                                 value={field.value}
                                 onChange={handleChange}
+                                variant="outlined"
                             />
                         </Grid>
                     ))}
                 </Grid>
-                <Button variant="contained" color="primary" sx={{mt: 2}} onClick={handleSubmit}>Add Card</Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{mt: 2}}
+                    onClick={handleSubmit}
+                    // disableElevation  // 禁用按钮的阴影
+                >
+                    Add Card
+                </Button>
             </CardContent>
         </Card>
-
     );
 };
 
