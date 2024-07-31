@@ -20,10 +20,10 @@ const fadeIn = keyframes`
 
 const GitHubForm: React.FC<GitHubFormProps> = ({onSubmit}) => {
     const initialFormData = {
-        openaiEndpoint: '',
-        apiModel: '',
+        openaiEndpoint: 'https://api.openai.com/v1/',
+        apiModel: 'gpt-4o',
         apiKey: '',
-        repoUrl: '',
+        repoUrl: 'https://github.com/',
     };
 
     const [formData, setFormData] = useState(initialFormData);
