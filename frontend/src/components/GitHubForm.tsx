@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Box, Button, Card, CardContent, Grid, TextField, Typography} from '@mui/material';
+import {Button, Card, CardContent, Grid, TextField, Typography} from '@mui/material';
 import {keyframes} from "@emotion/react";
 
 interface GitHubFormProps {
