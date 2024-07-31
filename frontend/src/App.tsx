@@ -8,7 +8,6 @@ import {
     Snackbar,
     Typography,
 } from '@mui/material';
-import {keyframes} from '@emotion/react';
 import ShownCard from './components/ShownCard.tsx';
 import OAuthLogin from "./components/OAuth";
 import ApiService from './services/ApiService';

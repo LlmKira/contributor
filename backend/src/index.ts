@@ -186,7 +186,7 @@ const handleOAuthCallback = async (
                 res.status(500).send('Failed to get user id');
                 return;
             } else {
-                console.log('User logged in:', userData.id);
+                console.log('User logged in:', userData);
             }
             const userId = createUserId(service.platform, userData.id);
             let user = await User.findOne({uid: userId}).exec();
