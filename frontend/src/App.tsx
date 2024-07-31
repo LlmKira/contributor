@@ -4,8 +4,6 @@ import {
     Avatar,
     Box,
     Button,
-    Card,
-    CardContent,
     Container,
     Snackbar,
     Typography,
@@ -217,7 +215,7 @@ const App: React.FC = () => {
                     {platform ? renderCardForm() : <Typography>No supported platform found.</Typography>}
                 </Box>
                 <Box>
-                    {cards.map((card, index) => (
+                    {cards.slice().reverse().map((card, index) => (
                         <ShownCard
                             key={card.cardId}
                             card={card}

@@ -6,6 +6,7 @@ interface GitHubFormProps {
     onSubmit: (data: any) => void;
 }
 
+// 定义 fadeIn 动画
 const fadeIn = keyframes`
     from {
         opacity: 0;
@@ -37,12 +38,18 @@ const GitHubForm: React.FC<GitHubFormProps> = ({onSubmit}) => {
     };
 
     return (
-        <Card variant="outlined" sx={{
-            mb: 4,
-            boxShadow: 3,
-            transition: 'box-shadow 0.3s, transform 0.3s',
-            '&:hover': {boxShadow: 6, transform: 'translateY(-5px)'}
-        }}>
+        <Card
+            variant="outlined"
+            sx={{
+                mb: 2,
+                boxShadow: 3,
+                transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
+                opacity: 1,
+                '&:hover': {
+                    transform: 'scale(1.005)',
+                },
+            }}
+        >
             <CardContent sx={{animation: `${fadeIn} 0.5s`}}>
                 <Typography variant="h5">Create Card</Typography>
                 <Grid container spacing={2}>
