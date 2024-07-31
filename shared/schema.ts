@@ -32,7 +32,7 @@ export type CardT = z.infer<typeof cardSchema>;
 export const userSchema = z.object({
     uid: z.string().max(100),
     name: z.string().max(100),
-    email: z.string().optional(),
+    email: z.string().optional().nullable(),
     accessToken: z.string(),
     avatarUrl: z.string().optional().default('https://avatars.githubusercontent.com/in/907205'),
     sourcePlatform: z.nativeEnum(Platform).optional(),
