@@ -4,10 +4,13 @@ import {
     Avatar,
     Box,
     Button,
+    Card,
+    CardContent,
     Container,
     Snackbar,
     Typography,
 } from '@mui/material';
+import {keyframes} from '@emotion/react';
 import ShownCard from './components/ShownCard.tsx';
 import OAuthLogin from "./components/OAuth";
 import ApiService from './services/ApiService';
@@ -20,7 +23,6 @@ import GitHubForm from "./components/GitHubForm.tsx";
 import OhMyGptForm from "./components/OhMyGptForm.tsx";
 
 const apiService = new ApiService(import.meta.env.VITE_BACKEND_URL);
-
 
 interface EditState {
     cardId: string;
@@ -99,8 +101,14 @@ const App: React.FC = () => {
             console.error('Error during logout:', err);
         }
     }, []);
+
     const handleFormSubmit = async (formData: any) => {
         try {
+            if (!user?.uid) {
+                console.error('No user found.');
+                return;
+            }
+            formData.userId = user?.uid;
             const newCard = cardSchema.parse(formData);
             const repoUrl = extractGitHubRepoUrl(newCard.repoUrl);
             if (!repoUrl) {
@@ -108,10 +116,6 @@ const App: React.FC = () => {
                 return;
             }
             newCard.repoUrl = repoUrl;
-            if (!user?.uid) {
-                console.error('No user found.');
-                return;
-            }
             const createdCard = await apiService.createUserCard(newCard, user.uid);
             setCards([...cards, createdCard]);
             setSnackbar({open: true, message: 'Card added successfully.'});
@@ -177,7 +181,7 @@ const App: React.FC = () => {
 
     if (loading) {
         return (
-            <Container>
+            <Container maxWidth="md">
                 <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
                     <Typography variant="h4">Loading...</Typography>
                 </Box>
@@ -187,14 +191,14 @@ const App: React.FC = () => {
 
     if (!user || !isLoggedIn) {
         return (
-            <Container>
+            <Container maxWidth="md">
                 <OAuthLogin/>
             </Container>
         );
     }
 
     return (
-        <Container>
+        <Container maxWidth="md">
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity="warning">
                     {snackbar.message}

@@ -58,7 +58,7 @@ const SESSION_SECRET = process.env.SESSION || 'a_exp_session_secret';
 const TOKEN_EXPIRATION = '7d'; // 1 week
 
 mongoose.connect(MONGODB_URI, {
-    dbName: 'github-cards',
+    dbName: 'contributor-cards-v1',
 }).then(
     () => {
         console.log('MongoDB connection established successfully');
@@ -180,8 +180,15 @@ const handleOAuthCallback = async (
                 userResponse = await axios.get(getUserUrl.url, {headers: {Authorization: `Bearer ${accessToken}`}});
             }
             const userData = service.parseUser(userResponse.data);
+            // id 不能是 undefined
+            if (!userData.id) {
+                console.error(`Failed to get user id from ${service.name} OAuth callback:`, userData);
+                res.status(500).send('Failed to get user id');
+                return;
+            } else {
+                console.log('User logged in:', userData.id);
+            }
             const userId = createUserId(service.platform, userData.id);
-
             let user = await User.findOne({uid: userId}).exec();
             if (!user) {
                 user = new User({
@@ -244,7 +251,7 @@ app.get('/auth/ohmygpt/callback', (req, res) => handleOAuthCallback(req, res, {
         platform: Platform.OhMyGPT,
         getTokenResponseData: data => ({accessToken: data.data.token}),
         parseUser: data => ({
-            id: data.data.user_id,
+            id: data.data.userId,
             name: data.data.userEmail.split('@')[0],
             email: data.data.userEmail,
         })
