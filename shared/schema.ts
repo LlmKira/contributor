@@ -32,13 +32,15 @@ export type CardT = z.infer<typeof cardSchema>;
 export const userSchema = z.object({
     uid: z.string().max(100),
     name: z.string().max(100),
-    email: z.string(),
+    email: z.string().optional(),
     accessToken: z.string(),
     avatarUrl: z.string().optional().default('https://avatars.githubusercontent.com/in/907205'),
     sourcePlatform: z.nativeEnum(Platform).optional(),
 });
 // 定义去掉 accessToken 的 schema
-export const publicUserSchema = userSchema.omit({accessToken: true});
+export const publicUserSchema = userSchema.omit(
+    {accessToken: true}
+);
 
 export type UserT = z.infer<typeof userSchema>;
 export type PublicUserT = z.infer<typeof publicUserSchema>;
