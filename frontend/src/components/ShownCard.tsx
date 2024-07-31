@@ -1,10 +1,11 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
     Box,
     Button,
     Card,
     CardContent,
     Chip,
+    Collapse,
     IconButton,
     Switch,
     Table,
@@ -17,6 +18,7 @@ import {
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {keyframes} from '@emotion/react';
 
@@ -79,7 +81,6 @@ const obscureApiKey = (apiKey: string): string => {
     return `${apiKey.substring(0, visibleCharacters)}${obscuredSection}${apiKey.substring(apiKey.length - visibleCharacters)}`;
 };
 
-
 const ShownCard: React.FC<CardComponentProps> = (
     {
         card,
@@ -92,6 +93,8 @@ const ShownCard: React.FC<CardComponentProps> = (
         showCaption = false,
         confirmDelete
     }) => {
+    const [expanded, setExpanded] = useState(false);
+
     return (
         <Card key={card.cardId} variant="outlined" sx={{
             mb: 2,
@@ -104,20 +107,31 @@ const ShownCard: React.FC<CardComponentProps> = (
             }
         }}>
             <CardContent sx={{position: 'relative'}}>
-                <Typography variant="h6" sx={{
-                    mb: 2,
-                    transition: 'color 0.3s',
-                    color: card.disabled ? 'text.disabled' : 'text.primary',
-                    animation: `${slideIn} 0.5s`
-                }}>
-                    {card.repoUrl.replace(/\/$/, '').split('/').slice(-1)}
-                </Typography>
+                <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                    <Typography variant="h6" sx={{
+                        mb: 2,
+                        transition: 'color 0.3s',
+                        color: card.disabled ? 'text.disabled' : 'text.primary',
+                        animation: `${slideIn} 0.5s`
+                    }}>
+                        {card.repoUrl.replace(/\/$/, '').split('/').slice(-1)}
+                    </Typography>
+                    <IconButton
+                        onClick={() => setExpanded(!expanded)}
+                        aria-expanded={expanded}
+                        aria-label="show more"
+                    >
+                        <ExpandMoreIcon sx={{
+                            transform: expanded ? 'rotate(180deg)' : 'rotate(0)',
+                            transition: 'transform 0.3s',
+                        }}/>
+                    </IconButton>
+                </Box>
 
                 <Box sx={{
                     border: '1px dashed',
                     borderRadius: '5px',
                     p: 1,
-                    mb: 2,
                     display: 'flex',
                     alignItems: 'center',
                     animation: `${highlightColor} 0.5s`
@@ -130,122 +144,124 @@ const ShownCard: React.FC<CardComponentProps> = (
                     </CopyToClipboard>
                 </Box>
 
-                <Table sx={{animation: `${fadeIn} 0.5s`}}>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell><strong>OpenAI Endpoint</strong></TableCell>
-                            <TableCell>
-                                {editMode.cardId === card.cardId && editMode.field === 'openaiEndpoint' ? (
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        <TextField
-                                            fullWidth
-                                            value={card.openaiEndpoint}
-                                            onChange={(e) => handleChange(card.cardId, 'openaiEndpoint', e.target.value)}
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                    <Table sx={{animation: `${fadeIn} 0.5s`, mt: 2}}>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell><strong>OpenAI Endpoint</strong></TableCell>
+                                <TableCell>
+                                    {editMode.cardId === card.cardId && editMode.field === 'openaiEndpoint' ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                            <TextField
+                                                fullWidth
+                                                value={card.openaiEndpoint}
+                                                onChange={(e) => handleChange(card.cardId, 'openaiEndpoint', e.target.value)}
+                                            />
+                                            <Button onClick={() => handleSave(card.cardId)}>Save</Button>
+                                        </Box>
+                                    ) : (
+                                        <Chip
+                                            label={card.openaiEndpoint}
+                                            sx={{
+                                                transition: 'background-color 0.3s',
+                                                animation: `${fadeIn} 0.5s`,
+                                                '&:hover': {
+                                                    backgroundColor: 'lightblue',
+                                                    cursor: 'pointer'
+                                                },
+                                            }}
+                                            onDoubleClick={() => handleDoubleClick(card.cardId, 'openaiEndpoint')}
                                         />
-                                        <Button onClick={() => handleSave(card.cardId)}>Save</Button>
-                                    </Box>
-                                ) : (
-                                    <Chip
-                                        label={card.openaiEndpoint}
-                                        sx={{
-                                            transition: 'background-color 0.3s',
-                                            animation: `${fadeIn} 0.5s`,
-                                            '&:hover': {
-                                                backgroundColor: 'lightblue',
-                                                cursor: 'pointer'
-                                            },
-                                        }}
-                                        onDoubleClick={() => handleDoubleClick(card.cardId, 'openaiEndpoint')}
-                                    />
-                                )}
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><strong>Model</strong></TableCell>
-                            <TableCell>
-                                {editMode.cardId === card.cardId && editMode.field === 'apiModel' ? (
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        <TextField
-                                            fullWidth
-                                            value={card.apiModel}
-                                            onChange={(e) => handleChange(card.cardId, 'apiModel', e.target.value)}
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell><strong>Model</strong></TableCell>
+                                <TableCell>
+                                    {editMode.cardId === card.cardId && editMode.field === 'apiModel' ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                            <TextField
+                                                fullWidth
+                                                value={card.apiModel}
+                                                onChange={(e) => handleChange(card.cardId, 'apiModel', e.target.value)}
+                                            />
+                                            <Button onClick={() => handleSave(card.cardId)}>Save</Button>
+                                        </Box>
+                                    ) : (
+                                        <Chip
+                                            label={card.apiModel}
+                                            sx={{
+                                                transition: 'background-color 0.3s',
+                                                animation: `${fadeIn} 0.5s`,
+                                                '&:hover': {
+                                                    backgroundColor: 'lightblue',
+                                                    cursor: 'pointer'
+                                                }
+                                            }}
+                                            onDoubleClick={() => handleDoubleClick(card.cardId, 'apiModel')}
                                         />
-                                        <Button onClick={() => handleSave(card.cardId)}>Save</Button>
-                                    </Box>
-                                ) : (
-                                    <Chip
-                                        label={card.apiModel}
-                                        sx={{
-                                            transition: 'background-color 0.3s',
-                                            animation: `${fadeIn} 0.5s`,
-                                            '&:hover': {
-                                                backgroundColor: 'lightblue',
-                                                cursor: 'pointer'
-                                            }
-                                        }}
-                                        onDoubleClick={() => handleDoubleClick(card.cardId, 'apiModel')}
-                                    />
-                                )}
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><strong>API Key</strong></TableCell>
-                            <TableCell>
-                                {editMode.cardId === card.cardId && editMode.field === 'apiKey' ? (
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        <TextField
-                                            fullWidth
-                                            value={card.apiKey}
-                                            onChange={(e) => handleChange(card.cardId, 'apiKey', e.target.value)}
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell><strong>API Key</strong></TableCell>
+                                <TableCell>
+                                    {editMode.cardId === card.cardId && editMode.field === 'apiKey' ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                            <TextField
+                                                fullWidth
+                                                value={card.apiKey}
+                                                onChange={(e) => handleChange(card.cardId, 'apiKey', e.target.value)}
+                                            />
+                                            <Button onClick={() => handleSave(card.cardId)}>Save</Button>
+                                        </Box>
+                                    ) : (
+                                        <Chip
+                                            label={obscureApiKey(card.apiKey)}
+                                            sx={{
+                                                transition: 'background-color 0.3s',
+                                                animation: `${fadeIn} 0.5s`,
+                                                '&:hover': {
+                                                    backgroundColor: 'lightblue',
+                                                    cursor: 'pointer'
+                                                }
+                                            }}
+                                            onDoubleClick={() => handleDoubleClick(card.cardId, 'apiKey')}
                                         />
-                                        <Button onClick={() => handleSave(card.cardId)}>Save</Button>
-                                    </Box>
-                                ) : (
-                                    <Chip
-                                        label={obscureApiKey(card.apiKey)}
-                                        sx={{
-                                            transition: 'background-color 0.3s',
-                                            animation: `${fadeIn} 0.5s`,
-                                            '&:hover': {
-                                                backgroundColor: 'lightblue',
-                                                cursor: 'pointer'
-                                            }
-                                        }}
-                                        onDoubleClick={() => handleDoubleClick(card.cardId, 'apiKey')}
-                                    />
-                                )}
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><strong>Repository URL</strong></TableCell>
-                            <TableCell>
-                                {editMode.cardId === card.cardId && editMode.field === 'repoUrl' ? (
-                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                        <TextField
-                                            fullWidth
-                                            value={card.repoUrl}
-                                            onChange={(e) => handleChange(card.cardId, 'repoUrl', e.target.value)}
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell><strong>Repository URL</strong></TableCell>
+                                <TableCell>
+                                    {editMode.cardId === card.cardId && editMode.field === 'repoUrl' ? (
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                            <TextField
+                                                fullWidth
+                                                value={card.repoUrl}
+                                                onChange={(e) => handleChange(card.cardId, 'repoUrl', e.target.value)}
+                                            />
+                                            <Button onClick={() => handleSave(card.cardId)}>Save</Button>
+                                        </Box>
+                                    ) : (
+                                        <Chip
+                                            label={card.repoUrl}
+                                            sx={{
+                                                transition: 'background-color 0.3s',
+                                                animation: `${fadeIn} 0.5s`,
+                                                '&:hover': {
+                                                    backgroundColor: 'lightblue',
+                                                    cursor: 'pointer'
+                                                }
+                                            }}
+                                            onDoubleClick={() => handleDoubleClick(card.cardId, 'repoUrl')}
                                         />
-                                        <Button onClick={() => handleSave(card.cardId)}>Save</Button>
-                                    </Box>
-                                ) : (
-                                    <Chip
-                                        label={card.repoUrl}
-                                        sx={{
-                                            transition: 'background-color 0.3s',
-                                            animation: `${fadeIn} 0.5s`,
-                                            '&:hover': {
-                                                backgroundColor: 'lightblue',
-                                                cursor: 'pointer'
-                                            }
-                                        }}
-                                        onDoubleClick={() => handleDoubleClick(card.cardId, 'repoUrl')}
-                                    />
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </Collapse>
 
                 <Box sx={{
                     mt: 2,
@@ -289,4 +305,3 @@ const ShownCard: React.FC<CardComponentProps> = (
 };
 
 export default ShownCard;
-
