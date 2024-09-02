@@ -42,7 +42,7 @@ const GitHubForm: React.FC<GitHubFormProps> = ({onSubmit}) => {
             variant="outlined"
             sx={{
                 mb: 2,
-                boxShadow: 3,
+                boxShadow: 0,
                 transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
                 opacity: 1,
                 '&:hover': {
