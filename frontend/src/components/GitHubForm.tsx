@@ -46,7 +46,7 @@ const GitHubForm: React.FC<GitHubFormProps> = ({onSubmit}) => {
                 transition: 'box-shadow 0.3s, opacity 0.3s, transform 0.3s',
                 opacity: 1,
                 '&:hover': {
-                    transform: 'scale(1.005)',
+                    // transform: 'scale(1.005)',
                 },
             }}
         >
