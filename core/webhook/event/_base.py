@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Literal
+from typing import Optional, Union, Literal, List
 
 from github import GithubIntegration, Github
 from github.CommitComment import CommitComment as GithubCommitComment
@@ -184,6 +184,137 @@ class Repository(BaseModel):
     @property
     def is_public(self):
         return not self.private
+
+
+class BasePullRequest(BaseModel, ABC):
+    _links: dict
+    """Links related to the pull request."""
+
+    active_lock_reason: Union[str, None]
+    """Can be: resolved, off-topic, too heated, spam, null."""
+
+    additions: Optional[int] = None
+
+    assignee: Optional[dict]
+    """Assignee information."""
+
+    assignees: List[Union[dict, None]]
+    """List of assignees."""
+
+    author_association: str
+    """Author's association with the repository."""
+
+    auto_merge: Optional[dict]
+    """Auto merge status."""
+
+    base: dict
+    """Base information."""
+
+    body: Union[str, None]
+    """Pull request body."""
+
+    changed_files: Optional[int] = None
+
+    closed_at: Union[str, None]
+    """Timestamp when closed."""
+
+    comments: Optional[int] = None
+
+    comments_url: str
+    """Comments URL."""
+
+    commits: Optional[int] = None
+
+    commits_url: str
+    """Commits URL."""
+
+    created_at: str
+    """Creation timestamp."""
+
+    deletions: Optional[int] = None
+
+    diff_url: str
+    """Diff URL."""
+
+    draft: bool
+    """Is a draft?"""
+
+    head: dict
+    """Head information."""
+
+    html_url: str
+    """HTML URL."""
+
+    id: int
+    """Unique ID."""
+
+    issue_url: str
+    """Issue URL."""
+
+    labels: List[dict]
+    """Associated labels."""
+
+    locked: bool
+    """Is locked?"""
+
+    maintainer_can_modify: Optional[bool] = None
+
+    merge_commit_sha: Union[str, None]
+    """Merge commit SHA."""
+
+    mergeable: Optional[bool] = None
+    mergeable_state: Optional[str] = None
+    merged: Optional[bool] = None
+
+    merged_at: Union[str, None]
+    """Timestamp when merged."""
+
+    merged_by: Optional[dict]
+
+    milestone: Optional[dict]
+    """Milestone details."""
+
+    node_id: str
+    """Node ID."""
+
+    number: int
+    """Pull request number."""
+
+    patch_url: str
+    """Patch URL."""
+
+    rebaseable: Optional[bool] = None
+    requested_reviewers: List[dict]
+    """Requested reviewers."""
+
+    requested_teams: List[dict]
+    """Requested teams."""
+
+    review_comment_url: str
+    """Review comment URL."""
+
+    review_comments: Optional[int] = None
+
+    review_comments_url: str
+    """Review comments URL."""
+
+    state: str
+    """State: open or closed."""
+
+    statuses_url: str
+    """Statuses URL."""
+
+    title: str
+    """Pull request title."""
+
+    updated_at: str
+    """Last update timestamp."""
+
+    url: str
+    """API URL."""
+
+    user: Optional[dict]
+    """User information."""
 
 
 class BaseEvent(BaseModel, ABC):
