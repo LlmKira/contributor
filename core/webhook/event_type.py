@@ -2,7 +2,7 @@
 
 from .event.issue_comment import CreateIssueCommentEvent
 from .event.issues import OpenedIssueEvent, ClosedIssueEvent
-from .event.pull_request import OpenedPullRequestEvent
+from .event.pull_request import OpenedPullRequestEvent, ClosedPullRequestEvent, EditedPullRequestEvent
 
 
 class BaseEventType(object):
@@ -61,11 +61,17 @@ class _PullRequest(BaseEventType):
     ASSIGNED = "assigned"
     AUTO_MERGE_DISABLED = "auto_merge_disabled"
     AUTO_MERGE_ENABLED = "auto_merge_enabled"
+
     CLOSED = "closed"
+    CLOSED_EVENT = ClosedPullRequestEvent
+
     CONVERTED_TO_DRAFT = "converted_to_draft"
     DEMILESTONED = "demilestoned"
     DEQUEUED = "dequeued"
+
     EDITED = "edited"
+    EDITED_EVENT = EditedPullRequestEvent
+
     ENQUEUED = "enqueued"
     LABELED = "labeled"
     LOCKED = "locked"
@@ -96,4 +102,6 @@ EVENT_MODEL = {
     (Issue.__str__(), Issue.CLOSED): Issue.CLOSED_EVENT,
     (IssueComment.__str__(), IssueComment.CREATED): IssueComment.CREATED_EVENT,
     (PullRequest.__str__(), PullRequest.OPENED): PullRequest.OPENED_EVENT,
+    (PullRequest.__str__(), PullRequest.CLOSED): PullRequest.CLOSED_EVENT,
+    (PullRequest.__str__(), PullRequest.EDITED): PullRequest.EDITED_EVENT,
 }

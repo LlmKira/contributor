@@ -122,3 +122,59 @@ class OpenedPullRequestEvent(BaseEvent):
         :return:
         """
         return self.repository.get_repo(integration=integration)
+
+
+class ClosedPullRequestEvent(BaseEvent):
+    action: Literal["closed"]
+    number: int
+    pull_request: PullRequest
+    repository: Repository
+    sender: Sender
+    organization: Optional[Organization] = None
+    installation: Optional[Installation] = None
+
+    model_config = ConfigDict(extra="allow")
+
+    def get_pull_request(self, integration: GithubIntegration):
+        """
+        Get the pull request object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.get_repo(integration=integration).get_pull(number=self.pull_request.number)
+
+    def get_repo(self, integration: GithubIntegration):
+        """
+        Get the repository object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_repo(integration=integration)
+
+
+class EditedPullRequestEvent(BaseEvent):
+    action: Literal["edited"]
+    number: int
+    pull_request: PullRequest
+    repository: Repository
+    sender: Sender
+    organization: Optional[Organization] = None
+    installation: Optional[Installation] = None
+
+    model_config = ConfigDict(extra="allow")
+
+    def get_pull_request(self, integration: GithubIntegration):
+        """
+        Get the pull request object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.get_repo(integration=integration).get_pull(number=self.pull_request.number)
+
+    def get_repo(self, integration: GithubIntegration):
+        """
+        Get the repository object.
+        :param integration: GithubIntegration
+        :return:
+        """
+        return self.repository.get_repo(integration=integration)
