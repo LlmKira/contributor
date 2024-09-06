@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Literal, List
+from typing import Optional, Union, Literal
 
 from github import GithubIntegration, Github
 from github.CommitComment import CommitComment as GithubCommitComment
@@ -187,43 +187,8 @@ class Repository(BaseModel):
 
 
 class BasePullRequest(BaseModel, ABC):
-    _links: Optional[dict] = None
-    """Links related to the pull request."""
-
-    active_lock_reason: Optional[str] = None
-    """Can be: resolved, off-topic, too heated, spam, null."""
-
-    additions: Optional[int] = None
-
-    assignee: Optional[dict] = None
-    """Assignee information."""
-
-    assignees: Optional[List[Union[dict, None]]] = None
-    """List of assignees."""
-
-    author_association: Optional[str] = None
-    """Author's association with the repository."""
-
-    auto_merge: Optional[dict] = None
-    """Auto merge status."""
-
-    base: Optional[dict] = None
-    """Base information."""
-
-    body: Optional[str] = None
-    """Pull request body."""
-
-    changed_files: Optional[int] = None
-
-    closed_at: Optional[str] = None
-    """Timestamp when closed."""
-
-    comments: Optional[int] = None
-
     comments_url: str
     """Comments URL."""
-
-    commits: Optional[int] = None
 
     commits_url: str
     """Commits URL."""
@@ -231,16 +196,8 @@ class BasePullRequest(BaseModel, ABC):
     created_at: str
     """Creation timestamp."""
 
-    deletions: Optional[int] = None
-
     diff_url: str
     """Diff URL."""
-
-    draft: Optional[bool] = None
-    """Is a draft?"""
-
-    head: Optional[dict] = None
-    """Head information."""
 
     html_url: str
     """HTML URL."""
@@ -251,28 +208,8 @@ class BasePullRequest(BaseModel, ABC):
     issue_url: str
     """Issue URL."""
 
-    labels: Optional[List[dict]] = None
-    """Associated labels."""
-
     locked: bool
     """Is locked?"""
-
-    maintainer_can_modify: Optional[bool] = None
-
-    merge_commit_sha: Optional[str] = None
-    """Merge commit SHA."""
-
-    mergeable: Optional[bool] = None
-    mergeable_state: Optional[str] = None
-    merged: Optional[bool] = None
-
-    merged_at: Optional[str] = None
-    """Timestamp when merged."""
-
-    merged_by: Optional[dict] = None
-
-    milestone: Optional[dict] = None
-    """Milestone details."""
 
     node_id: str
     """Node ID."""
@@ -283,17 +220,8 @@ class BasePullRequest(BaseModel, ABC):
     patch_url: str
     """Patch URL."""
 
-    rebaseable: Optional[bool] = None
-    requested_reviewers: Optional[List[dict]] = None
-    """Requested reviewers."""
-
-    requested_teams: Optional[List[dict]] = None
-    """Requested teams."""
-
     review_comment_url: str
     """Review comment URL."""
-
-    review_comments: Optional[int] = None
 
     review_comments_url: str
     """Review comments URL."""
@@ -312,19 +240,6 @@ class BasePullRequest(BaseModel, ABC):
 
     url: str
     """API URL."""
-
-    user: Optional[dict] = None
-    """User information."""
-
-    # Additional optional fields not present in the original code
-    allow_auto_merge: Optional[bool] = None
-    allow_update_branch: Optional[bool] = None
-    delete_branch_on_merge: Optional[bool] = None
-    merge_commit_message: Optional[str] = None
-    merge_commit_title: Optional[str] = None
-    squash_merge_commit_message: Optional[str] = None
-    squash_merge_commit_title: Optional[str] = None
-    use_squash_pr_title_as_default: Optional[bool] = None
 
 
 class BaseEvent(BaseModel, ABC):

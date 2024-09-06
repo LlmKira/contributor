@@ -62,7 +62,7 @@ class Issue(BaseIssue):
     user: IssueUser
 
 
-class OpenedIssueOpenEvent(BaseEvent):
+class OpenedIssueEvent(BaseEvent):
     action: Literal["opened"]
     issue: Issue
     repository: Repository
@@ -89,7 +89,7 @@ class OpenedIssueOpenEvent(BaseEvent):
         return self.repository.get_repo(integration=integration)
 
 
-class ClosedIssueOpenEvent(BaseEvent):
+class ClosedIssueEvent(BaseEvent):
     action: Literal["closed"]
     issue: Issue
     repository: Repository
