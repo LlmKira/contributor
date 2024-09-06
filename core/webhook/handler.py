@@ -22,12 +22,16 @@ class HandlerConfig:
 
 
 def should_ignore_bot(config: HandlerConfig, model: BaseModel) -> bool:
-    """Returns True if the sender is a bot and the event should be ignored."""
+    """
+    Returns True if the sender is a bot and the event should be ignored.
+    """
     return getattr(model, "sender", None) and config.escape_bot and model.sender.is_bot()
 
 
 class InterceptHandler(logging.Handler):
-    """A logging handler to intercept and redirect logging messages to loguru."""
+    """
+    A logging handler to intercept and redirect logging messages to loguru.
+    """
 
     def emit(self, record):
         loguru_logger = logger.opt(depth=2, exception=record.exc_info)
@@ -35,6 +39,10 @@ class InterceptHandler(logging.Handler):
 
 
 class Handler:
+    """
+    Logger for the GitHub webhook handler.
+    """
+
     def __init__(self, handler: Callable, desc: str, filter_func: Optional[Callable], config: HandlerConfig):
         self.handler = handler
         self.desc = desc
@@ -43,6 +51,10 @@ class Handler:
 
 
 class GithubWebhookHandler:
+    """
+    A handler for GitHub webhooks.
+    """
+
     def __init__(self, log_server: bool = False, webhook_secret: Optional[str] = None):
         """
         Initialize the GitHub webhook handler.
@@ -97,7 +109,7 @@ class GithubWebhookHandler:
         event_handlers = self.handlers.setdefault(event_type, {}).setdefault(action, {}).setdefault(priority, {})
         if unique_id in event_handlers:
             logger.warning(
-                f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
+                f"Re-registering listener with unique_id {unique_id} for Event<{event_type}>({action}), "
                 f"old handler will be replaced."
             )
 
@@ -108,7 +120,7 @@ class GithubWebhookHandler:
             config=config,
         )
         logger.info(
-            f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}"
+            f"Registered listener for Event<{event_type}>({action}) with unique_id {unique_id} --desc {desc}"
         )
 
     def listen(
@@ -130,7 +142,7 @@ class GithubWebhookHandler:
 
             if unique_id in event_handlers:
                 logger.warning(
-                    f"Re-registering listener with unique_id {unique_id} for Event[{event_type}]({action}), "
+                    f"Re-registering listener with unique_id {unique_id} for Event<{event_type}>({action}), "
                     f"old handler will be replaced."
                 )
             event_handlers[unique_id] = Handler(
@@ -141,7 +153,7 @@ class GithubWebhookHandler:
             )
 
             logger.info(
-                f"Registered listener for Event[{event_type}]({action}) with unique_id {unique_id} --desc {desc}"
+                f"Registered listener for Event<{event_type}>({action}) with unique_id {unique_id} --desc {desc}"
             )
 
             @wraps(func)
@@ -149,7 +161,7 @@ class GithubWebhookHandler:
                 try:
                     return await func(*args, **kwargs)
                 except Exception as exc:
-                    logger.error(f"Error in handler for Event[{event_type}]({action}): {exc}")
+                    logger.error(f"Error in handler for Event<{event_type}>({action}): {exc}")
                     raise
 
             return wrapped_function
@@ -160,7 +172,7 @@ class GithubWebhookHandler:
         """Handle incoming GitHub webhook events."""
         handlers_per_priority = self.handlers.get(event_type, {}).get(action, {})
         if not handlers_per_priority:
-            logger.debug(f"Event[{event_type}]({action}) received, no handlers registered.")
+            logger.debug(f"Event<{event_type}>({action}) received, no handlers registered.")
             return
 
         for priority in sorted(handlers_per_priority.keys()):
@@ -172,28 +184,29 @@ class GithubWebhookHandler:
                 filter_func = handler_obj.filter_func
 
                 if filter_func and not self.apply_filter(filter_func, payload):
-                    logger.info(f"Event[{event_type}]({action}) filtered for handler with desc: {handler_obj.desc}")
+                    logger.info(f"Event<{event_type}>({action}) filtered for handler with desc: {handler_obj.desc}")
                     continue
 
                 model = self.get_event_model(event_type, action, payload)
                 if not model:
-                    logger.warning(f"Event[{event_type}]({action}) model not found")
+                    logger.warning(f"Event<{event_type}>({action}) model not found")
                     continue
 
                 if should_ignore_bot(config, model):
                     logger.info(
-                        f"Event[{event_type}]({action}) ignored due to bot sender "
+                        f"Event<{event_type}>({action}) ignored due to bot sender "
                         f"for handler with desc: {handler_obj.desc}"
                     )
                     continue
 
                 if self.debug:
-                    print(f"Debug Event[{event_type}]({action})")
+                    print(f"Debug Event Received <{event_type}>({action})")
                     print(model.model_dump())
 
                 tasks.append(self._execute_handler(handler, model))
 
             if tasks:
+                # Execute the handlers concurrently
                 await asyncio.gather(*tasks)
 
     @staticmethod
