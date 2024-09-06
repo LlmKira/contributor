@@ -187,35 +187,35 @@ class Repository(BaseModel):
 
 
 class BasePullRequest(BaseModel, ABC):
-    _links: dict
+    _links: Optional[dict] = None
     """Links related to the pull request."""
 
-    active_lock_reason: Union[str, None]
+    active_lock_reason: Optional[str] = None
     """Can be: resolved, off-topic, too heated, spam, null."""
 
     additions: Optional[int] = None
 
-    assignee: Optional[dict]
+    assignee: Optional[dict] = None
     """Assignee information."""
 
-    assignees: List[Union[dict, None]]
+    assignees: Optional[List[Union[dict, None]]] = None
     """List of assignees."""
 
-    author_association: str
+    author_association: Optional[str] = None
     """Author's association with the repository."""
 
-    auto_merge: Optional[dict]
+    auto_merge: Optional[dict] = None
     """Auto merge status."""
 
-    base: dict
+    base: Optional[dict] = None
     """Base information."""
 
-    body: Union[str, None]
+    body: Optional[str] = None
     """Pull request body."""
 
     changed_files: Optional[int] = None
 
-    closed_at: Union[str, None]
+    closed_at: Optional[str] = None
     """Timestamp when closed."""
 
     comments: Optional[int] = None
@@ -236,10 +236,10 @@ class BasePullRequest(BaseModel, ABC):
     diff_url: str
     """Diff URL."""
 
-    draft: bool
+    draft: Optional[bool] = None
     """Is a draft?"""
 
-    head: dict
+    head: Optional[dict] = None
     """Head information."""
 
     html_url: str
@@ -251,7 +251,7 @@ class BasePullRequest(BaseModel, ABC):
     issue_url: str
     """Issue URL."""
 
-    labels: List[dict]
+    labels: Optional[List[dict]] = None
     """Associated labels."""
 
     locked: bool
@@ -259,19 +259,19 @@ class BasePullRequest(BaseModel, ABC):
 
     maintainer_can_modify: Optional[bool] = None
 
-    merge_commit_sha: Union[str, None]
+    merge_commit_sha: Optional[str] = None
     """Merge commit SHA."""
 
     mergeable: Optional[bool] = None
     mergeable_state: Optional[str] = None
     merged: Optional[bool] = None
 
-    merged_at: Union[str, None]
+    merged_at: Optional[str] = None
     """Timestamp when merged."""
 
-    merged_by: Optional[dict]
+    merged_by: Optional[dict] = None
 
-    milestone: Optional[dict]
+    milestone: Optional[dict] = None
     """Milestone details."""
 
     node_id: str
@@ -284,10 +284,10 @@ class BasePullRequest(BaseModel, ABC):
     """Patch URL."""
 
     rebaseable: Optional[bool] = None
-    requested_reviewers: List[dict]
+    requested_reviewers: Optional[List[dict]] = None
     """Requested reviewers."""
 
-    requested_teams: List[dict]
+    requested_teams: Optional[List[dict]] = None
     """Requested teams."""
 
     review_comment_url: str
@@ -313,8 +313,18 @@ class BasePullRequest(BaseModel, ABC):
     url: str
     """API URL."""
 
-    user: Optional[dict]
+    user: Optional[dict] = None
     """User information."""
+
+    # Additional optional fields not present in the original code
+    allow_auto_merge: Optional[bool] = None
+    allow_update_branch: Optional[bool] = None
+    delete_branch_on_merge: Optional[bool] = None
+    merge_commit_message: Optional[str] = None
+    merge_commit_title: Optional[str] = None
+    squash_merge_commit_message: Optional[str] = None
+    squash_merge_commit_title: Optional[str] = None
+    use_squash_pr_title_as_default: Optional[bool] = None
 
 
 class BaseEvent(BaseModel, ABC):
