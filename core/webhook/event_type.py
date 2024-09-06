@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from .event.issue_comment import CreateIssueCommentEvent
-from .event.issues import OpenedIssueOpenEvent, ClosedIssueOpenEvent
+from .event.issues import OpenedIssueEvent, ClosedIssueEvent
+from .event.pull_request import OpenedPullRequestEvent
 
 
 class BaseEventType(object):
@@ -16,7 +17,7 @@ class _Issue(BaseEventType):
     ASSIGNED = "assigned"
 
     CLOSED = "closed"
-    CLOSED_EVENT = ClosedIssueOpenEvent
+    CLOSED_EVENT = ClosedIssueEvent
 
     DELETED = "deleted"
     DEMILESTONED = "demilestoned"
@@ -26,7 +27,7 @@ class _Issue(BaseEventType):
     MILESTONED = "milestoned"
 
     OPENED = "opened"
-    OPENED_EVENT = OpenedIssueOpenEvent
+    OPENED_EVENT = OpenedIssueEvent
 
     PINNED = "pinned"
     REOPENED = "reopened"
@@ -51,11 +52,48 @@ class _IssueComment(BaseEventType):
         return "issue_comment"
 
 
+class _PullRequest(BaseEventType):
+    """
+    assigned auto_merge base branch_change closed converted_to_draft
+    edited labeled locked merged milestoned opened ready_for_review
+    reopened review_requested review_request_removed synchronize unlabeled unlocked
+    """
+    ASSIGNED = "assigned"
+    AUTO_MERGE_DISABLED = "auto_merge_disabled"
+    AUTO_MERGE_ENABLED = "auto_merge_enabled"
+    CLOSED = "closed"
+    CONVERTED_TO_DRAFT = "converted_to_draft"
+    DEMILESTONED = "demilestoned"
+    DEQUEUED = "dequeued"
+    EDITED = "edited"
+    ENQUEUED = "enqueued"
+    LABELED = "labeled"
+    LOCKED = "locked"
+    MILESTONED = "milestoned"
+
+    OPENED = "opened"
+    OPENED_EVENT = OpenedPullRequestEvent
+
+    READY_FOR_REVIEW = "ready_for_review"
+    REOPENED = "reopened"
+    REVIEW_REQUEST_REMOVED = "review_request_removed"
+    REVIEW_REQUESTED = "review_requested"
+    SYNCHRONIZE = "synchronize"
+    UNASSIGNED = "unassigned"
+    UNLABELED = "unlabeled"
+    UNLOCKED = "unlocked"
+
+    def __str__(self):
+        return "pull_request"
+
+
 Issue = _Issue()
 IssueComment = _IssueComment()
+PullRequest = _PullRequest()
 
 EVENT_MODEL = {
     (Issue.__str__(), Issue.OPENED): Issue.OPENED_EVENT,
     (Issue.__str__(), Issue.CLOSED): Issue.CLOSED_EVENT,
     (IssueComment.__str__(), IssueComment.CREATED): IssueComment.CREATED_EVENT,
+    (PullRequest.__str__(), PullRequest.OPENED): PullRequest.OPENED_EVENT,
 }
