@@ -7,10 +7,6 @@
     "start:frontend": "vite --config frontend/vite.config.ts",
     "build:frontend": "tsc -p frontend && vite build --config frontend/vite.config.ts"
   },
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/cookie-parser": "^1.4.7",
