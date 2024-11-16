@@ -1,27 +1,32 @@
 {
   "name": "backend",
   "private": true,
+  "scripts": {
+    "start": "pnpm tsx src/index.ts",
+    "dev": "pnpm tsx src/index.ts",
+    "build": "pnpm tsc",
+    "test": "pnpm jest"
+  },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/uuid": "^10.0.0"
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
-    "@types/dotenv": "^8.2.0",
     "@types/express-session": "^1.18.0",
-    "@types/mongodb": "^4.0.7",
     "@types/pino-http": "^5.8.4",
-    "axios": "^1.7.2",
-    "body-parser": "^1.20.2",
+    "axios": "^1.7.7",
+    "body-parser": "^1.20.3",
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "express-rate-limit": "^7.3.1",
-    "express-session": "^1.18.0",
-    "mongoose": "^8.4.3",
-    "pino-http": "^10.1.0",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "express-session": "^1.18.1",
+    "mongoose": "^8.8.1",
+    "pino-http": "^10.3.0",
     "uuid": "^10.0.0"
   }
 }

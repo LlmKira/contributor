@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "start:webhook": "node webhook_proxy.cjs",
-    "start:backend": "bun run backend/src/index.ts",
+    "start:backend": "pnpm tsx backend/src/index.ts",
     "start:frontend": "vite --config frontend/vite.config.ts",
     "build:frontend": "tsc -p frontend && vite build --config frontend/vite.config.ts"
   },
@@ -15,6 +15,7 @@
     "@types/bun": "latest",
     "@types/cookie-parser": "^1.4.7",
     "@types/jsonwebtoken": "^9.0.6",
+    "tsx": "^4.19.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   },
