@@ -19,7 +19,7 @@
     "@types/cors": "^2.8.17",
     "@types/express-session": "^1.18.0",
     "@types/pino-http": "^5.8.4",
-    "axios": "^1.7.7",
+    "axios": "^1.7.4",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.1",
