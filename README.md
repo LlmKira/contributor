@@ -126,16 +126,8 @@ Special thanks to these resources that made this project possible:
 
 ## License
 
-This project is licensed under the MIT License with Non-Commercial Clause - see the [LICENSE](./LICENSE) file for
+This project is licensed under the Apache-2.0 license - see the [LICENSE](./LICENSE) file for
 details.
-
-### Non-Commercial Use
-
-You are free to use this software for any non-commercial purposes.
-
-### Commercial Use
-
-For commercial use, please contact us to obtain a commercial license.
 
 ## Contributing
 
